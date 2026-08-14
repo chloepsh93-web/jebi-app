@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { A } from "./assets/assets.js";
 import { store } from "./store.js";
 import { parse } from "./parser.js";
+import Onboarding from "./Onboarding.jsx";
 import {
   computeGourdState, summarize, GourdState, Direction, EventType,
-  RelationTag, RelationColor,
+  RelationTag, RelationColor, checkRemindDue,
 } from "./model.js";
 
 const GOURD_ASSET = {
@@ -23,28 +24,52 @@ const ROOF_POS = [
 ];
 
 export default function App() {
+  const [onboarded, setOnboarded] = useState(store.isOnboarded());
   const [tab, setTab] = useState("home");
   const [yeons, setYeons] = useState(store.getYeons());
   const [maeums, setMaeums] = useState(store.getMaeums());
   const [showAdd, setShowAdd] = useState(false);
+  const [detailYeonId, setDetailYeonId] = useState(null); // 인연 상세
 
   const refresh = () => {
     setYeons(store.getYeons());
     setMaeums(store.getMaeums());
   };
 
+  // 온보딩 미완료 → 온보딩 먼저
+  if (!onboarded) {
+    return <Onboarding onDone={() => { setOnboarded(true); refresh(); }} />;
+  }
+
   const stats = summarize(maeums);
   const roofGourds = maeums.filter(
     (m) => m.direction === Direction.RECEIVED && !m.repaidAt
   );
 
+  // 인연 상세 화면
+  if (detailYeonId) {
+    const yeon = yeons.find((y) => y.id === detailYeonId);
+    return (
+      <div className="app">
+        <YeonDetail
+          yeon={yeon}
+          maeums={maeums.filter((m) => m.yeonId === detailYeonId)}
+          onBack={() => setDetailYeonId(null)}
+          onRepay={(mid) => { store.updateMaeum(mid, { repaidAt: Date.now() }); refresh(); }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       {tab === "home" && (
-        <Home stats={stats} roofGourds={roofGourds} maeums={maeums} />
+        <Home stats={stats} roofGourds={roofGourds} maeums={maeums}
+          onRepay={(mid) => { store.updateMaeum(mid, { repaidAt: Date.now() }); refresh(); }} />
       )}
-      {tab === "yeon" && <YeonList yeons={yeons} maeums={maeums} />}
-      {tab === "me" && <MePlaceholder onReset={() => { store.reset(); refresh(); }} />}
+      {tab === "yeon" && <YeonList yeons={yeons} maeums={maeums} onOpen={setDetailYeonId} />}
+      {tab === "me" && <MePlaceholder onReset={() => { store.reset(); refresh(); }}
+        onReplayOnboarding={() => { store.setOnboarded(false); setOnboarded(false); }} />}
 
       {tab === "home" && (
         <button className="fab" onClick={() => setShowAdd(true)}>
@@ -75,8 +100,16 @@ export default function App() {
 }
 
 // ---------------- HOME ----------------
-function Home({ stats, roofGourds, maeums }) {
+function Home({ stats, roofGourds, maeums, onRepay }) {
   const empty = maeums.length === 0;
+  // 갚을 때가 온 박 (익음/오래익음) — 갚기 넛지
+  const dueToRepay = roofGourds.filter((m) => {
+    const st = computeGourdState(m);
+    return st === GourdState.RIPE || st === GourdState.OLD_RIPE;
+  });
+  const yeons = store.getYeons();
+  const nameOf = (id) => yeons.find((y) => y.id === id)?.name || "소중한 분";
+
   return (
     <div className="content">
       <div className="navbar">
@@ -84,7 +117,7 @@ function Home({ stats, roofGourds, maeums }) {
         <div className="nav-title">우리 집</div>
         <div className="bell-wrap">
           <img src={A.bell} alt="알림" />
-          {stats.oweCount > 0 && <span className="bell-badge">{stats.oweCount}</span>}
+          {dueToRepay.length > 0 && <span className="bell-badge">{dueToRepay.length}</span>}
         </div>
       </div>
 
@@ -124,9 +157,24 @@ function Home({ stats, roofGourds, maeums }) {
           <div className="val">{stats.warmthCount}<span className="sub">개 · 온기</span></div>
         </div>
       </div>
+
+      {/* 갚을 때가 온 박 — 넛지 카드 */}
+      {dueToRepay.map((m) => (
+        <div className="repay-card" key={m.id}>
+          <div className="repay-body">
+            <b>{nameOf(m.yeonId)}</b>님과의 박이 익었어요
+            <span className="repay-sub"> — 갚을 때가 왔어요</span>
+          </div>
+          <div className="repay-cta">
+            <button className="repay-btn primary"
+              onClick={() => onRepay(m.id)}>다녀왔어요</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
+
 
 // ---------------- ADD FLOW ----------------
 function AddSheet({ onClose, onSaved }) {
@@ -206,6 +254,13 @@ function AddSheet({ onClose, onSaved }) {
             <h3>{manual ? "직접 입력" : "제비가 이렇게 정리했어요"}</h3>
             <p className="sub">확인하고 고친 뒤 지붕에 심어요</p>
 
+            {parsed && parsed.event === "기타" && (
+              <div className="etc-notice">
+                제비가 아직 배우지 못한 소식이에요 (개업·집들이 등).<br />
+                아래에서 종류를 직접 골라 기록할 수 있어요.
+              </div>
+            )}
+
             <label className="fl">받음 / 보냄</label>
             <select className="field" value={form.direction}
               onChange={(e) => setForm({ ...form, direction: e.target.value })}>
@@ -248,7 +303,7 @@ function AddSheet({ onClose, onSaved }) {
 }
 
 // ---------------- YEON LIST ----------------
-function YeonList({ yeons, maeums }) {
+function YeonList({ yeons, maeums, onOpen }) {
   if (yeons.length === 0) {
     return (
       <div className="content">
@@ -283,7 +338,7 @@ function YeonList({ yeons, maeums }) {
         {rows.map(({ y, latest, st, count }) => {
           const tc = tagCopy(st);
           return (
-            <div className="yeon-item" key={y.id}>
+            <div className="yeon-item" key={y.id} onClick={() => onOpen(y.id)}>
               <div className="y-tags">
                 <span className="y-dot" style={{ background: tc.c }} />
                 <span className="y-tag">{tc.t}</span>
@@ -310,8 +365,68 @@ function copyFor(name, st, m) {
   }
 }
 
+// ---------------- YEON DETAIL (타임라인) ----------------
+function YeonDetail({ yeon, maeums, onBack, onRepay }) {
+  if (!yeon) return null;
+  const sorted = [...maeums].sort((a, b) => b.plantedAt - a.plantedAt);
+
+  const eventLabel = (m) => {
+    const dir = m.direction === Direction.RECEIVED ? "받음" : "보냄";
+    return `${m.eventType || "경조사"} · ${dir}`;
+  };
+  const fmtDate = (m) => {
+    if (m.eventDate) {
+      const d = m.eventDate.startsWith("????") ? m.eventDate.slice(5) + " (연도미상)" : m.eventDate;
+      return d + (m.eventTime ? ` ${m.eventTime}` : "");
+    }
+    return new Date(m.plantedAt).toLocaleDateString("ko-KR");
+  };
+
+  return (
+    <div className="content">
+      <div className="navbar">
+        <button className="nav-back" onClick={onBack}>‹</button>
+        <div className="nav-title">{yeon.name}</div>
+        <div className="nav-spacer" />
+      </div>
+
+      <div className="detail-head">
+        <div className="detail-name">{yeon.name}
+          {yeon.relationTag ? <span className="detail-tag">{yeon.relationTag}</span> : null}
+        </div>
+        <div className="detail-sub">주고받은 마음 {maeums.length}개</div>
+      </div>
+
+      <div className="timeline">
+        {sorted.map((m) => {
+          const st = computeGourdState(m);
+          const repayable = m.direction === Direction.RECEIVED && !m.repaidAt &&
+            (st === GourdState.RIPE || st === GourdState.OLD_RIPE);
+          return (
+            <div className="tl-item" key={m.id}>
+              <div className="tl-dot" style={{ background: m.direction === Direction.RECEIVED ? "#EF9F27" : "#8EC5E8" }} />
+              <div className="tl-body">
+                <div className="tl-top">{eventLabel(m)}</div>
+                <div className="tl-date">{fmtDate(m)}</div>
+                {m.place && <div className="tl-place">{m.place}</div>}
+                {m.amount != null && <div className="tl-amt">{Number(m.amount).toLocaleString()}원</div>}
+                {m.repaidAt && <div className="tl-done">✓ 갚음 완료 · 박이 열렸어요</div>}
+                {repayable && (
+                  <button className="repay-btn primary sm" onClick={() => onRepay(m.id)}>
+                    다녀왔어요 (박 열기)
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ---------------- ME (placeholder) ----------------
-function MePlaceholder({ onReset }) {
+function MePlaceholder({ onReset, onReplayOnboarding }) {
   return (
     <div className="content">
       <div className="navbar"><div className="nav-spacer" /><div className="nav-title">나</div><div className="nav-spacer" /></div>
@@ -319,7 +434,10 @@ function MePlaceholder({ onReset }) {
         설정은 다음 단계에서 채워집니다.<br />
         (알림 설정 · 백업 · 세계관 다시 보기)
       </p>
-      <div style={{ padding: "0 20px" }}>
+      <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <button className="btn btn-ghost" onClick={onReplayOnboarding}>
+          온보딩 다시 보기
+        </button>
         <button className="btn btn-ghost" onClick={() => { if (confirm("모든 데이터를 지울까요? (테스트용)")) onReset(); }}>
           데이터 초기화 (테스트용)
         </button>

@@ -117,3 +117,54 @@ input.field:focus, textarea.paste:focus, select.field:focus { outline: none; bor
 .y-when { font-size: 11px; color: var(--text-mute); }
 .y-copy { font-size: 14px; margin-bottom: 5px; line-height: 1.5; }
 .y-who { font-size: 12px; color: var(--text-mute); }
+
+/* ---- Onboarding ---- */
+.ob-root { min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+  max-width: 440px; margin: 0 auto; padding: 30px 26px calc(40px + env(safe-area-inset-bottom)); background: var(--cream-light); }
+.ob-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.ob-hero { width: 100%; border-radius: 16px; display: block; margin-bottom: 22px; }
+.ob-head { font-size: 20px; font-weight: 500; line-height: 1.55; white-space: pre-line; }
+.ob-head.sm { font-size: 18px; }
+.ob-sub { font-size: 13px; color: var(--text-mid); line-height: 1.7; margin: 12px 0 4px; }
+.ob-badge { font-size: 11px; color: var(--amber-dark); background: var(--cream); padding: 6px 14px; border-radius: 999px; margin-top: 14px; }
+.ob-dots { display: flex; gap: 6px; justify-content: center; margin: 20px 0; }
+.ob-dots i { width: 6px; height: 6px; border-radius: 50%; background: #D8CFBA; transition: all .3s; }
+.ob-dots i.on { background: var(--amber-deep); width: 18px; border-radius: 3px; }
+.ob-card .paste { width: 100%; margin-bottom: 4px; }
+.ob-card .field { width: 100%; margin-bottom: 10px; }
+.ob-card .btn { width: 100%; margin-top: 8px; }
+
+/* ---- Repay nudge card (Home) ---- */
+.repay-card { margin: 8px 16px; padding: 14px 16px; background: linear-gradient(180deg, #FFF6E6, #FCF0DC);
+  border: 0.5px solid #EAD6A8; border-radius: 14px; }
+.repay-body { font-size: 13.5px; color: var(--text); margin-bottom: 10px; line-height: 1.5; }
+.repay-sub { color: var(--amber-dark); }
+.repay-cta { display: flex; }
+.repay-btn { padding: 10px 16px; border: none; border-radius: 10px; font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer; }
+.repay-btn.primary { background: var(--amber-deep); color: #fff; width: 100%; }
+.repay-btn.primary:active { background: var(--amber-dark); }
+.repay-btn.sm { margin-top: 8px; padding: 8px 14px; }
+
+/* ---- Yeon detail / timeline ---- */
+.nav-back { background: none; border: none; font-size: 26px; color: var(--text-mid); cursor: pointer; width: 30px; line-height: 1; }
+.detail-head { padding: 8px 20px 16px; border-bottom: 0.5px solid var(--border); }
+.detail-name { font-size: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.detail-tag { font-size: 11px; color: var(--text-mid); background: var(--cream); padding: 3px 9px; border-radius: 999px; }
+.detail-sub { font-size: 12px; color: var(--text-mute); margin-top: 4px; }
+.timeline { padding: 18px 20px; }
+.tl-item { display: flex; gap: 12px; padding-bottom: 18px; position: relative; }
+.tl-item::before { content: ""; position: absolute; left: 4.5px; top: 14px; bottom: -4px; width: 1px; background: var(--border); }
+.tl-item:last-child::before { display: none; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; z-index: 1; }
+.tl-body { flex: 1; }
+.tl-top { font-size: 13.5px; font-weight: 500; }
+.tl-date { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+.tl-place { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
+.tl-amt { font-size: 12.5px; color: var(--amber-dark); margin-top: 3px; }
+.tl-done { font-size: 12px; color: #0F6E56; margin-top: 5px; }
+
+/* 범위 외 소식 안내 */
+.etc-notice { background: #FBF3E3; border: 0.5px solid #EAD6A8; border-radius: 10px;
+  padding: 11px 13px; font-size: 12.5px; color: var(--amber-dark); line-height: 1.6; margin-bottom: 12px; }
+.fl { display: block; font-size: 11.5px; color: var(--text-mute); margin: 2px 0 6px; }
