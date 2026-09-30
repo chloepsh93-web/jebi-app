@@ -1160,3 +1160,18 @@ input.field:focus, textarea.paste:focus, select.field:focus { outline: none; bor
 @media (prefers-reduced-motion: reduce) {
   .split-row:active { transform: none; }
 }
+
+/* 온보딩: 현재 슬라이드 높이만 반영하고 조작 영역은 44px 확보. */
+.intro-track { display: block; }
+.intro-slide img { max-height: min(34dvh, 280px); object-fit: contain; }
+.intro-dots { justify-content: center; gap: 0; }
+.intro-dots button.intro-dot,
+.intro-dots button.intro-dot.on { width: 44px; height: 44px; background: transparent; border-radius: 0; }
+.intro-dots button.intro-dot::after { content: ""; display: block; margin: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--color-dot-inactive); }
+.intro-dots button.intro-dot.on::after { width: 20px; border-radius: 4px; background: var(--color-brand-amber-deep); }
+.intro-next { width: 100%; min-height: 48px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--color-brand-amber-deep); outline-offset: 3px; }
+
+button.me-row { width: 100%; text-align: left; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; min-height: 44px; }
+button.me-row + .me-row { border-top: 1px dashed var(--color-border-strong); }

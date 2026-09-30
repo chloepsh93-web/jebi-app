@@ -43,7 +43,7 @@ const INTRO_SLIDES = [
     art: A.jebi_perched,
     alt: "지붕 위 제비",
     title: "제비가 소식을\n물어다 줘요",
-    desc: "다가오는 경조사를 먼저 알려주고, 다녀온 뒤엔 감사의 마음을 전할 때를 일러줘요.",
+    desc: "다가오는 경조사를 먼저 알려주고, 앱에서 다가오는 일정을 확인하고, 다녀온 마음을 기록해요.",
   },
   {
     kicker: "인연",
@@ -96,10 +96,10 @@ function IntroSlides({ onDone, onSkip, invite }) {
       >
         <div
           className="intro-track"
-          style={{ transform: `translateX(-${idx * 100}%)` }}
+          aria-live="polite" aria-atomic="true"
         >
-          {INTRO_SLIDES.map((s, i) => (
-            <div className="intro-slide" key={i}>
+          {INTRO_SLIDES.filter((_, i) => i === idx).map((s) => (
+            <div className="intro-slide" key={idx}>
               <img className="ob-hero" src={s.art} alt={s.alt} />
               <div className="intro-kicker">{s.kicker}</div>
               <h2 className="serif">
@@ -123,6 +123,7 @@ function IntroSlides({ onDone, onSkip, invite }) {
             className={`intro-dot${i === idx ? " on" : ""}`}
             onClick={() => setIdx(i)}
             aria-label={`${i + 1}번 슬라이드`}
+            aria-current={i === idx ? "step" : undefined}
           />
         ))}
       </div>

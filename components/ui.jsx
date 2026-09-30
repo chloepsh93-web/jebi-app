@@ -1,18 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { A } from "@/lib/assets";
+import { mountModalFocus } from "@/lib/modalFocus";
+
+function useModalFocus(onClose) {
+  const root = useRef(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => mountModalFocus(root.current, () => close.current?.()), []);
+  return root;
+}
+
 
 /** 파괴적/중요 확인 다이얼로그 — 목업의 시스템 알럿 패턴 (X 없음 · 두 액션 필수) */
 export function ConfirmDialog({ title, sub, cancelLabel = "취소", okLabel = "지우기", danger = true, onCancel, onOk }) {
+  const root = useModalFocus(onCancel);
+  const titleId = useId();
+  const subId = useId();
   return (
     <div className="confirm-backdrop" onClick={onCancel}>
       <div
         className={`confirm-card${danger ? "" : " light"}`}
+        ref={root} tabIndex={-1} role="dialog" aria-modal="true"
+        aria-labelledby={titleId} aria-describedby={sub ? subId : undefined}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="confirm-title">{title}</div>
-        {sub && <div className="confirm-sub">{sub}</div>}
+        <div className="confirm-title" id={titleId}>{title}</div>
+        {sub && <div className="confirm-sub" id={subId}>{sub}</div>}
         <div className="confirm-actions">
           <button className="btn btn-cancel" onClick={onCancel}>
             {cancelLabel}
@@ -78,7 +93,7 @@ export function SetupGuide({ error }) {
 /** 토스트 */
 export function Toast({ text }) {
   if (!text) return null;
-  return <div className="toast">{text}</div>;
+  return <div className="toast" role="status" aria-live="polite">{text}</div>;
 }
 
 /**
@@ -201,6 +216,7 @@ export function useSheetHistory(open, onClose, key = "sheet") {
  *   (라운드3 코디네이터 권장안 — 디자인팀 반론 1.1① 채택). 한 시트에 두 버튼 금지.
  */
 export function BottomSheet({ title, onClose, children, closeVariant = "back" }) {
+  const root = useModalFocus(onClose);
   const start = useRef(null);
   const [dragX, setDragX] = useState(0);
 
@@ -230,6 +246,7 @@ export function BottomSheet({ title, onClose, children, closeVariant = "back" })
     <div className="sheet-backdrop" onClick={onClose}>
       <div
         className="sheet"
+        ref={root} tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
