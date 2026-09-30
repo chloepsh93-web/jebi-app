@@ -1,0 +1,160 @@
+/**
+ * 밤의 박 — 다크모드 토큰 오버라이드 레이어 (디자인팀, 2026-09-25)
+ *
+ * - 기존 규칙을 수정하지 않는다. [data-theme="night"] 스코프의 변수 오버라이드만 둔다.
+ * - guideline §3.4 + 기획안 §7: 단순 반전이 아닌 세계관 테마 '밤의 박'.
+ * - 감정선 역할 유지 (받은 정=amber / 전한 정=dusty blue / 중립=green) — 명도·채도만 조정.
+ * - 박 상태 5색(보호 토큰)은 색상 유지·명도만 조정.
+ * - localStorage 'jebi:theme' = 'light' | 'night' | 'system' (기본 'system').
+ * - 본문 대비 4.5:1 유지 (실측: primary 14.63 · secondary 10.25 · muted 6.76).
+ *
+ * ⚠️ amber-deep 이중 역할 분리:
+ *   흰 텍스트용 버튼 배경(#9A6410, 대비 4.99:1)과 다크 배경 위 텍스트(3.60:1 미달)는
+ *   하나의 색으로 AA를 동시 만족할 수 없으므로, night 토큰은 텍스트 역할(#D89A3A, 7.37:1)에
+ *   맞추고 .btn-primary 배경은 아래에서 #9A6410으로 핀 고정한다.
+ */
+
+[data-theme="night"] {
+  /* ---- 서피스: 먹색 종이 ---- */
+  --color-surface-page: #14110B;
+  --color-surface-app: #1A1611; /* guideline §3.4 --bg */
+  --color-surface-card: #262017;
+  --color-surface-card-alt: #2E2517;
+  --color-surface-white: #241F15; /* 시트·칩 배경 (어두운 흰색 역할) */
+  --color-surface-dark: #F0E7D2; /* 토스트 반전 (밝은 배경 + 진한 텍스트) */
+
+  /* ---- 텍스트 ---- */
+  --color-text-primary: #EFE7D6;
+  --color-text-secondary: #CBC3AE;
+  --color-text-muted: #A79E88;
+  --color-text-on-dark: #2B2823; /* 반전된 토스트 위 텍스트 */
+
+  /* ---- 경계 ---- */
+  --color-border-subtle: #38301F;
+  --color-border-strong: #5C4F36;
+  --color-border-gold: #6B5732;
+  --color-border-danger: #5C2E26;
+
+  /* ---- 브랜드 ---- */
+  --color-brand-amber: #EF9F27; /* 유지 (밤 배경 대비 8.28:1) */
+  --color-brand-amber-deep: #D89A3A; /* 텍스트 역할 명도 상향 */
+  --color-brand-amber-dark: #E8B96A; /* 강조 텍스트 역할 */
+  --color-brand-badge: #EFBF20;
+  --color-brand-badge-ink: #5A4400;
+
+  /* ---- 박 상태 5색 (보호 토큰 — 색상 유지·명도 조정) ---- */
+  --color-gourd-sprout: #A9C46B;
+  --color-gourd-growing: #84B04A;
+  --color-gourd-ripe: #EF9F27;
+  --color-gourd-opened: #57B58C;
+  --color-gourd-old: #A3804F;
+
+  /* ---- 박씨 ---- */
+  --color-seed-sprout-bg: #2A3519;
+  --color-seed-sprout-text: #B9D189;
+
+  /* ---- 방향·의미 ---- */
+  --color-direction-sent: #7BAFD4; /* dusty blue 명도 상향 (7.65:1) */
+  --color-direction-sent-bg: #1E3242;
+  --color-semantic-danger: #D98A7C;
+  --color-semantic-danger-bg: #3A211B;
+  --color-semantic-success-bg: #182A21;
+  --color-semantic-info: #6FA3D8;
+
+  /* ---- 태그 ---- */
+  --color-tag-friend: #C4A876;
+  --color-tag-gourd-pale: #27331A;
+  --color-tag-gourd-text: #A9C47E;
+  --color-tag-gourd-old-bg: #33291A;
+  --color-tag-gourd-old-text: #D9BE8C; /* J04: 다크모드 7.94:1 */
+  --color-tag-amber-bg: #4A3A1C;
+
+  /* ---- 틴트·그라데이션 (밤의 달빛 톤) ---- */
+  --color-tint-amber-soft: #2E2517;
+  --color-tint-sky: #1E2A33;
+  --color-tint-detect: #2E2517;
+  --color-gradient-callout: linear-gradient(180deg, #2E2517, #1A1611);
+  --color-gradient-seed: linear-gradient(180deg, #2E2517, #1A1611);
+  --color-sky: #7FB2D9;
+  --color-dot-inactive: #4A4232;
+  --color-track-timeline: #4A5A35;
+  --color-icon-sprout-ink: #B9D189;
+  --color-icon-sent-bg: #3A332A;
+
+  /* ---- 오버레이 ---- */
+  --color-overlay-sheet: rgba(0, 0, 0, 0.55);
+  --color-overlay-dialog: rgba(0, 0, 0, 0.65);
+  --color-overlay-celebrate: rgba(0, 0, 0, 0.6);
+  --color-overlay-ceremony: rgba(0, 0, 0, 0.65);
+  --color-overlay-wash: rgba(255, 255, 255, 0.12);
+
+  /* 결산 노을(sunset 1·2·3)·settle 잉크는 보호 모먼트 — 후순위 별도 튜닝까지 라이트 유지 */
+}
+
+/* ---- amber-deep 이중 역할 분리: 버튼 배경은 #9A6410 핀 고정 (흰 텍스트 4.99:1) ---- */
+[data-theme="night"] .btn-primary {
+  background-color: #9A6410;
+}
+[data-theme="night"] .btn-primary:active {
+  background-color: #854F0B;
+}
+
+/**
+ * 공유 카드 출력물 = '낮의 박' 고정 (기획안 §4 D2).
+ * 카드가 상대방·불특정 다수에게 보이는 출력물이므로 발신자 테마와 무관하게 라이트 유지.
+ * ShareCard.jsx 스토리 카드에 className="story-day"로 연결.
+ */
+[data-theme="night"] .story-day {
+  --color-surface-app: #FCFBF9;
+  --color-text-primary: #2C2C2A;
+  --color-text-secondary: #5A5852;
+  --color-text-muted: #75705F;
+  --color-brand-amber-deep: #9A6410;
+  --color-brand-amber-dark: #854F0B;
+  --color-border-gold: #EAD6A8;
+  --color-gradient-callout: linear-gradient(180deg, #FFF6E6, #FCF0DC);
+  --color-surface-white: #FFFFFF;
+}
+
+/* QR 타일은 스캔 대비를 위해 양 테마 모두 흰색 고정 */
+[data-theme="night"] .story-qr {
+  background-color: #FFFFFF;
+}
+
+/* ================= 테마 토글 (자립형 — ThemeToggle.jsx 전용) =================
+ * 토큰만 사용. 44px 터치 타겟 (guideline §2.2).
+ * 위치는 코디네이터가 Me(설정)에 배치 — 본 파일은 스타일만 제공한다.
+ */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-card-alt);
+  border: var(--size-border-hairline) solid var(--color-border-subtle);
+}
+.theme-toggle button {
+  min-height: var(--size-touch-min);
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--color-brand-amber-deep);
+  color: var(--color-text-on-primary);
+}
+/* night에서 amber-deep은 텍스트 역할(#D89A3A)이라 흰 텍스트 대비 미달 → 버튼 배경은 #9A6410 핀 */
+[data-theme="night"] .theme-toggle button[aria-pressed="true"] {
+  background: #9A6410;
+}
+.theme-toggle button:focus-visible {
+  outline: 2px solid var(--color-brand-amber);
+  outline-offset: 2px;
+}
