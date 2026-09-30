@@ -1175,3 +1175,12 @@ textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--colo
 
 button.me-row { width: 100%; text-align: left; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; min-height: 44px; }
 button.me-row + .me-row { border-top: 1px dashed var(--color-border-strong); }
+
+/* 핵심 화면 v1 — 일정 우선, 기능 텍스트와 삽화의 역할 구분 */
+.home-section-heading { padding: 16px 20px 8px; }
+.home-section-heading h2 { font-family: var(--font-serif), serif; font-size: 22px; font-weight: 400; margin: 6px 0; }
+.home-eyebrow { font-size: 12px; font-weight: 600; color: var(--color-brand-amber-deep); }
+button.schedule-card { display: block; width: calc(100% - 40px); text-align: left; color: inherit; font: inherit; border: 1px solid var(--color-border-subtle); min-height: 80px; }
+.home-glossary { margin: 12px 20px; font-size: 14px; color: var(--color-text-secondary); }
+.home-glossary summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+.big-text .home-section-heading h2 { font-size: 25px; }

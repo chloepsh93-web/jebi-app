@@ -125,7 +125,7 @@ export default function YeonDetail({
       </div>
 
       {/* P1-2: 차액 문장형 요약 카드 — 숫자를 문장으로 번역 */}
-      {balanceCopy && (
+      {mode === "정산" && balanceCopy && (
         <div className="yeon-balance">
           <p className={`bal-main ${balanceCopy.cls}`}>{balanceCopy.text}</p>
           <p className="bal-sub tnum">

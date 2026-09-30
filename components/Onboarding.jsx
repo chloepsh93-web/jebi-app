@@ -12,9 +12,9 @@ import DateField from "./DateField";
 import { Glossary } from "./ui";
 
 /**
- * 인터랙티브 온보딩 — 첫 박 심기
+ * 인터랙티브 온보딩 — 첫 소식 기록
  * jebi-onboarding-interactive.html 기준:
- * 인트로 슬라이드 4장(스와이프) → 입력(샘플/직접) → 파싱 중 → 확인(수정 가능) → 심기 → 목표 → 완료
+ * 인트로 슬라이드 3장(스와이프) → 입력(샘플/직접) → 파싱 중 → 확인(수정 가능) → 심기 → 목표 → 완료
  * 카드로 설명하지 않고, 첫 인연을 직접 심게 만든다.
  */
 const SAMPLE =
@@ -25,40 +25,25 @@ const EVENTS = ["결혼", "부고", "돌잔치", "생일"];
 /** 인트로 슬라이드 — '마음·박·인연·제비' 세계관 소개 */
 const INTRO_SLIDES = [
   {
-    kicker: "마음",
+    kicker: "정을 기억하는 제비",
     art: A.house_jebi_intro,
-    alt: "편지를 문 제비",
-    title: "받은 마음이\n자라는 집",
-    desc: "결혼식, 돌잔치, 부고… 문자로 날아오는 소식을 마음으로 심으면 지붕 위에 박이 자라요.",
+    alt: "제비가 머무는 초가집",
+    title: "마음을 챙기면,\n인연이 자라는 집",
+    desc: "흥부가 제비에게 건넨 정이 박씨로 돌아왔듯, 주변의 소중한 순간을 함께 기억해요.",
   },
   {
-    kicker: "박",
-    art: A.gourd_big,
-    alt: "지붕 위 박",
-    title: "박은 마음의\n약속이에요",
-    desc: COPY.ONBOARDING.ripeDesc,
-  },
-  {
-    kicker: "제비",
+    kicker: "소중한 순간을 놓치지 않게",
     art: A.jebi_perched,
-    alt: "지붕 위 제비",
-    title: "제비가 소식을\n물어다 줘요",
-    desc: "다가오는 경조사를 먼저 알려주고, 앱에서 다가오는 일정을 확인하고, 다녀온 마음을 기록해요.",
+    alt: "소식을 전하는 제비",
+    title: "소식을 건네고,\n일정을 기억해요",
+    desc: "청첩장·부고 문자를 확인해 일정으로 기록해요. 돈·선물은 실제 주고받은 뒤 따로 남겨요.",
   },
   {
-    kicker: "인연",
+    kicker: "정이 쌓이는 우리 집",
     art: A.house_gourds,
-    alt: "정이 가득한 집",
-    title: "인연의 정이\n쌓여요",
-    desc: COPY.ONBOARDING.yearDesc,
-    glossary: true,
-  },
-  {
-    kicker: "박씨",
-    art: A.sprout,
-    alt: "새 박씨",
-    title: "정은 박씨가 되어\n다시 돌아와요",
-    desc: "옛날 옛적, 흥부가 제비를 고쳐 보내자 제비가 박씨를 물어왔어요. 이 앱의 제비도 그래요. 제비가 소식을 물어다 주면, 당신이 정을 심어요.",
+    alt: "정이 쌓이는 같은 초가집",
+    title: "기억한 마음이,\n다음 인사로 이어져요",
+    desc: "참석과 안부, 주고받은 기록을 인연별로 돌아봐요. 복은 더 따뜻해진 관계의 이야기예요.",
   },
 ];
 
@@ -186,6 +171,7 @@ export default function Onboarding({ onDone, inviteRef }) {
   const [form, setForm] = useState({ name: "", event: "", date: "", time: "", place: "" });
   const [planted, setPlanted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const startParse = () => {
     if (!text.trim()) return;
@@ -211,7 +197,12 @@ export default function Onboarding({ onDone, inviteRef }) {
 
   const plant = async () => {
     if (saving) return;
+    if (!form.name.trim() || !form.event) {
+      setSaveError("인연 이름과 경조사 종류를 확인해주세요.");
+      return;
+    }
     setSaving(true);
+    setSaveError("");
     try {
       // J05: 예시 문자는 저장하지 않는다 — 김도현 같은 가짜 인연이
       // 실제 인연 목록·집계에 섞이지 않도록. 애니메이션만 보여준다.
@@ -232,8 +223,10 @@ export default function Onboarding({ onDone, inviteRef }) {
           remindedAt: null,
         });
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      setSaveError("저장하지 못했어요. 입력 내용은 남아 있어요. 다시 시도해주세요.");
+      setSaving(false);
+      return;
     }
     setSaving(false);
     setStage("plant");
@@ -336,6 +329,7 @@ export default function Onboarding({ onDone, inviteRef }) {
 
       {stage === "confirm" && (
         <div className="ob-card fade-in">
+          {saveError && <div className="error-box" role="alert">{saveError}</div>}
           <h2 className="ob-head sm">
             제비가 이렇게
             <br />

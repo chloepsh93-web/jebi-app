@@ -17,6 +17,7 @@
   "type": "module",
   "version": "0.1.0",
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "jsdom": "^26.1.0"
   }
 }
