@@ -1196,3 +1196,16 @@ button.schedule-card { display: block; width: calc(100% - 40px); text-align: lef
 .record-error { color: var(--color-semantic-danger); font-size: 14px; line-height: 1.6; margin: 12px 0; }
 button.editable { min-height: 44px; padding: 4px; border: 0; border-bottom: 1px dashed var(--color-brand-amber-deep); background: transparent; color: inherit; font: inherit; text-align: left; }
 @media (max-width: 360px) { .record-purpose-options { grid-template-columns: 1fr; } }
+
+/* 핵심 4화면 공통 마감: 기존 색·삽화 체계 유지 */
+.home-section-heading { padding: 22px 20px 12px; }
+.home-eyebrow { font-size: 14px; }
+.home-caption { font-size: 15px; line-height: 1.75; }
+.sheet .sub, .detail-mode-help { font-size: 14px; line-height: 1.65; }
+.detail-mode-help { color: var(--color-text-secondary); margin: 14px 20px; }
+.mode-btn, .detail-actions .chip-btn { min-height: 44px; }
+.st-row { width: 100%; border: 0; border-bottom: 1px solid var(--color-border-subtle); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; min-height: 56px; }
+.tl-open { width: 100%; border: 1px solid var(--color-border-subtle); border-radius: 14px; padding: 16px; background: var(--color-surface-card-alt); font: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 44px; }
+.sky-section { display: block; width: calc(100% - 40px); border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.record-purpose-options b { line-height: 1.5; }
+@media (max-width: 390px) { .record-purpose-options { grid-template-columns: 1fr; } }

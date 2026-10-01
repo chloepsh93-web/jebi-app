@@ -88,7 +88,8 @@ export default function Home({
         </div>
       )}
       {upcoming && (
-        <button type="button" className="schedule-card" onClick={() => onOpenYeon(upcoming.yeonId)}>          <div className="row">
+        <button type="button" className="schedule-card" onClick={() => onOpenYeon(upcoming.yeonId)}>
+          <div className="row">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <path d="M16 2v4M8 2v4M3 10h18" />
@@ -134,13 +135,9 @@ export default function Home({
 
       {empty ? (
         <p className="home-caption">
-          아직 지붕이 비어 있어요.
+          첫 기록부터 우리 집의 이야기가 시작돼요.
           <br />
-          받은 마음은 지붕 위 <span className="em">박</span>으로 자라고,
-          <br />
-          {COPY.HOME.emptyCaption}
-          <br />
-          <span className="em">첫 소식</span>을 기록하면 우리 집이 시작돼요.
+          소식을 기억하고, 소중한 순간을 챙겨요.
         </p>
       ) : (
         <p className="home-caption">
@@ -152,7 +149,7 @@ export default function Home({
 
       <div className="home-stats">
         <div className="stat">
-          <div className="lbl">{COPY.HOME.dueLabel}</div>
+          <div className="lbl">받은 마음</div>
           <div className="val">{stats.oweCount}<span className="sub">개 · 지붕 위</span></div>
         </div>
         <div className="stat">
@@ -204,10 +201,10 @@ export default function Home({
           <div className="repay-body">
             <b>{nameOf(m.yeonId)}</b>님과의 박이 익었어요
             <br />
-            <span className="repay-sub">{COPY.HOME.repaySub}</span>
+            <span className="repay-sub">기억해둔 마음을 다시 살펴볼까요?</span>
           </div>
-          <button className="btn-inline btn-primary" onClick={() => onRepay(m.id)}>
-            다녀왔어요
+          <button className="btn-inline btn-primary" onClick={() => onOpenYeon(m.yeonId)}>
+            기록 확인하기
           </button>
         </div>
       ))}
@@ -219,15 +216,15 @@ export default function Home({
 
       {/* 제비 편에 보낸 마음 (하늘) */}
       {sentOpen.length > 0 && (
-        <div className="sky-section" onClick={onOpenSent}>
+        <button type="button" className="sky-section" onClick={onOpenSent}>
           <div className="sky-title">제비 편에 보낸 마음</div>
           <div className="sky-sub">
             하늘을 나는 제비 {Math.min(sentOpen.length, 5)}
             <br />
-            아직 답례를 기다리는 마음이 하늘에 있어요
+            남겨둔 전한 마음을 돌아봐요
           </div>
           <div className="sky-more">전체 보기 ›</div>
-        </div>
+        </button>
       )}
 
       <button className="fab" onClick={onAdd}>

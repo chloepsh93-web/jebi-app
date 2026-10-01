@@ -82,9 +82,9 @@ test('relationship defaults to memory; monetary comparison is an explicit choice
  setup();
  const app=await mount('YeonDetail',{yeon:people[0],maeums:[{...upcoming,amount:10000,assetKind:'cash'}],yeons:people});
  assert.equal(app.container.querySelector('.yeon-balance'),null);
- await app.click(byText(app.container,'정산 모드'));
+ await app.click(byText(app.container,'돈·선물 기록'));
  assert.ok(app.container.querySelector('.yeon-balance'));
- await app.click(byText(app.container,'마음 모드'));
+ await app.click(byText(app.container,'인연의 기억'));
  assert.equal(app.container.querySelector('.yeon-balance'),null);
  await app.close();
 });
@@ -161,4 +161,16 @@ test('bereavement onboarding uses quiet completion and does not promise full gou
  assert.ok(!app.container.textContent.includes('이렇게 가득 차요'));
  assert.equal(app.container.querySelector('img').alt,'마음을 기억하는 우리 집');
  assert.equal(qa.writes[0].amount,null);
+});
+
+
+test('schedule timeline stays separate from transfers and never offers reply completion',async(t)=>{
+ setup();let opened=null;
+ const app=await mount('YeonDetail',{yeon:people[0],maeums:[upcoming],yeons:people,onOpenMaeum:m=>opened=m.id});t.after(()=>app.close());
+ assert.match(app.container.textContent,/소식을 기억해요/);
+ assert.ok(!app.container.textContent.includes('마음에 답했어요'));
+ await app.click(app.container.querySelector('.tl-open'));assert.equal(opened,'m1');
+ await app.click(byText(app.container,'돈·선물 기록'));
+ assert.equal(app.container.querySelectorAll('.st-row').length,0);
+ assert.match(app.container.textContent,/아직 돈·선물 기록이 없어요/);
 });
