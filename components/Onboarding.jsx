@@ -222,6 +222,7 @@ export default function Onboarding({ onDone, inviteRef }) {
           repaidAt: null,
           remindedAt: null,
         });
+        logEvent("occasion_saved", {}, "welcome");
       }
     } catch {
       setSaveError("저장하지 못했어요. 입력 내용은 남아 있어요. 다시 시도해주세요.");
