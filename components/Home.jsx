@@ -11,7 +11,7 @@ import AffiliateNudge from "./AffiliateNudge";
 import { COPY } from "@/lib/copy";
 
 const GOURD_IMG = {
-  [GourdState.SPROUT]: A.gourd_small,
+  [GourdState.SPROUT]: A.sprout,
   [GourdState.GROWING]: A.gourd_small,
   [GourdState.RIPE]: A.gourd_big,
   [GourdState.OLD_RIPE]: A.gourd_old,
@@ -118,7 +118,7 @@ export default function Home({
         </div>
       )}
 
-      <div className="home-house">
+      <div className={`home-house${stats.warmthCount > 0 ? " home-house-warm" : ""}`}>
         <img className="house" src={A.house_empty} alt="우리 집" />
         <img className="jebi-nest" src={A.jebi_perched} alt="둥지 곁 제비" />
         {roofGourds.slice(0, 5).map((m, i) => {
@@ -143,7 +143,7 @@ export default function Home({
         <p className="home-caption">
           지붕 위 <span className="em">박 {stats.oweCount}개</span>가 자라고 있어요
           <br />
-          전한 마음 {stats.warmthCount}개가 우리 집을 밝히고 있어요
+          답한 마음 {stats.warmthCount}개가 우리 집을 밝히고 있어요
         </p>
       )}
 
@@ -153,11 +153,12 @@ export default function Home({
           <div className="val">{stats.oweCount}<span className="sub">개 · 지붕 위</span></div>
         </div>
         <div className="stat">
-          <div className="lbl">전한 마음</div>
+          <div className="lbl">답한 마음</div>
           <div className="val">{stats.warmthCount}<span className="sub">개 · 온기</span></div>
         </div>
       </div>
 
+      <p className="growth-rule">받은 마음은 새싹으로, 참석 예정은 자라는 박으로, 참석함은 익은 박으로 보여요. 마음에 답했다고 표시하면 집에 온기가 더해져요. 금액이나 시간만으로 자라지는 않아요.</p>
       <details className="home-glossary"><summary>제비의 말이 궁금해요</summary><Glossary compact /></details>
 
       {/* 정의 순환 — 심어지길 기다리는 박씨 */}

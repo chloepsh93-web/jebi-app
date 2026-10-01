@@ -12,6 +12,7 @@ const result = await build({
   stdin: { contents: `
     import React, { act } from 'react';
     import { createRoot } from 'react-dom/client';
+    import MaeumSheet from './components/MaeumSheet.jsx';
     import Home from './components/Home.jsx';
     import Onboarding from './components/Onboarding.jsx';
     import YeonDetail from './components/YeonDetail.jsx';
@@ -20,7 +21,7 @@ const result = await build({
     export async function mount(name, props) {
       const container = document.createElement('div'); document.body.append(container);
       const root = createRoot(container);
-      const C = {Home,Onboarding,YeonDetail,AddMaeum}[name];
+      const C = {Home,Onboarding,YeonDetail,AddMaeum,MaeumSheet}[name];
       await act(async()=>root.render(React.createElement(C, props)));
       return { container, click: async (element)=>act(async()=>element.click()),
         input: async (element,value)=>act(async()=>{
@@ -157,9 +158,8 @@ test('bereavement onboarding uses quiet completion and does not promise full gou
  await app.click(buttons(app.container).find(b=>b.textContent.includes('심') && !b.textContent.includes('다시')));
  assert.match(app.container.textContent,/조용히 소식을 기록했어요/);
  assert.equal(app.container.querySelector('.sprout-grow'),null);
- await app.click(byText(app.container,'다음'));
+ assert.ok(byText(app.container,'저장한 일정 보러 가기'));
  assert.ok(!app.container.textContent.includes('이렇게 가득 차요'));
- assert.equal(app.container.querySelector('img').alt,'마음을 기억하는 우리 집');
  assert.equal(qa.writes[0].amount,null);
 });
 
@@ -173,4 +173,22 @@ test('schedule timeline stays separate from transfers and never offers reply com
  await app.click(byText(app.container,'돈·선물 기록'));
  assert.equal(app.container.querySelectorAll('.st-row').length,0);
  assert.match(app.container.textContent,/아직 돈·선물 기록이 없어요/);
+});
+
+
+test('schedule editing hides money and failed attendance save keeps the sheet open',async(t)=>{
+ setup(); let patch;
+ const app=await mount('MaeumSheet',{maeum:upcoming,yeonName:'김도현',onClose:()=>{},onSave:async(id,p)=>{patch=p;throw new Error('참석 상태 저장 실패');}});t.after(()=>app.close());
+ assert.equal(app.container.querySelector('input[inputmode="numeric"]'),null);
+ await app.select(app.container.querySelector('#record-attendance'),'attended');
+ await app.click(byText(app.container,'수정 내용 저장'));
+ assert.equal(patch.attendance,'attended'); assert.equal(patch.amount,null);
+ assert.match(app.container.querySelector('[role="alert"]').textContent,/저장 실패/);
+});
+
+test('shopping record starts as a sent transfer with the same occasion and no invented amount',async(t)=>{
+ setup();
+ const app=await mount('AddMaeum',{yeons:people,maeums:[],presetYeonId:people[0].id,presetOccasion:upcoming,onClose:()=>{}});t.after(()=>app.close());
+ assert.ok(app.container.textContent.includes('돈·선물'));
+ assert.equal(app.container.querySelector('input[inputmode="numeric"]').value,'');
 });

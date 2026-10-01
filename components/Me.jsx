@@ -15,7 +15,7 @@ import ThemeToggle from "@/components/ThemeToggle";
  * P2-1: Supabase 보관 안내 (백업)
  * '정' 프레임: 큰 글씨 (시니어 접근성)
  * P0 데이터 복원: 내 기록 지키기 (이메일 연결) / 이미 지킨 기록이 있어요 (로그인)
- * P0-2: CSV 내보내기 — "언제든 가져가실 수 있어요" (무료, 신뢰의 기본값)
+ * P0-2: CSV 내보내기 — "기록 표를 보관해요. 이미지·계정·박씨 연결의 전체 백업은 아니에요" (무료, 신뢰의 기본값)
  * P0-4: 백업 상태 UI — 마지막 동기화 시각 + 복원 가능 상태
  * P0-1a: 푸시 구독 수집 — "다가오는 소식을 제비가 알려드려요" (발송 없이 수집만)
  */
@@ -155,7 +155,7 @@ export default function Me({
       <button type="button" className="me-row" onClick={handleExport}>
         <span>
           📥 내 기록 내보내기 (CSV)
-          <span className="me-hint">언제든 가져가실 수 있어요</span>
+          <span className="me-hint">기록 표를 보관해요. 이미지·계정·박씨 연결의 전체 백업은 아니에요</span>
         </span>
         <span className="chev">›</span>
       </button>

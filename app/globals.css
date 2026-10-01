@@ -1209,3 +1209,11 @@ button.editable { min-height: 44px; padding: 4px; border: 0; border-bottom: 1px 
 .sky-section { display: block; width: calc(100% - 40px); border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .record-purpose-options b { line-height: 1.5; }
 @media (max-width: 390px) { .record-purpose-options { grid-template-columns: 1fr; } }
+
+/* 행동 기반 집과 검색 접근성 */
+.yeon-open { border:0; background:transparent; color:inherit; text-align:left; font:inherit; padding:8px 0; cursor:pointer; min-height:44px; }
+.growth-rule { font-size:13px; line-height:1.65; color:var(--color-text-secondary); margin:12px 20px; }
+.home-house-warm { background:radial-gradient(ellipse at 50% 70%, #ffe5a877, transparent 65%); }
+.home-house img { object-fit:contain; }
+@media (max-width:430px) { .home-house { width:min(100%, 330px); margin-inline:auto; } }
+@media (prefers-reduced-motion:reduce) { .sprout-grow,.fade-in { animation:none!important; } }

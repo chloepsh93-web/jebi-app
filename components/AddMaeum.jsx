@@ -63,11 +63,11 @@ const emptyForm = () => ({
   assetKind: "",
 });
 
-export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId = null, seedSupported = true, splitsSupported = false, onClose, onSaved, onToast = null }) {
-  const [purpose, setPurpose] = useState(seedFromMaeumId ? "transfer" : "schedule");
+export default function AddMaeum({ yeons, maeums, presetYeonId, presetOccasion = null, seedFromMaeumId = null, seedSupported = true, splitsSupported = false, onClose, onSaved, onToast = null }) {
+  const [purpose, setPurpose] = useState(seedFromMaeumId || presetOccasion ? "transfer" : "schedule");
   const [saveError, setSaveError] = useState("");
   const isTransfer = purpose === "transfer";
-  const [step, setStep] = useState("input"); // input → parsing → parseFail → detect/manual
+  const [step, setStep] = useState(presetOccasion ? "manual" : "input"); // input → parsing → parseFail → detect/manual
   const [text, setText] = useState("");
   const [parsedEtc, setParsedEtc] = useState(false); // P1-3: 범위 외 소식
   const [form, setForm] = useState(() => {
@@ -77,6 +77,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
       const y = yeons.find((v) => v.id === presetYeonId);
       if (y) { f.yeonId = y.id; f.name = y.name; f.relation = y.relationTag || ""; }
     }
+    if (presetOccasion) Object.assign(f, { event: presetOccasion.eventType, date: presetOccasion.eventDate || "", time: presetOccasion.eventTime || "", place: presetOccasion.place || "", direction: Direction.SENT, assetKind: "" });
     return f;
   });
   const [saving, setSaving] = useState(false);

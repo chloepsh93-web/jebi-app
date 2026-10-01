@@ -55,6 +55,7 @@ export default function Page() {
   const [settlementOpen, setSettlementOpen] = useState(false);
   // 라운드2 — 올해의 인연 돌아보기
   const [yearReportOpen, setYearReportOpen] = useState(false);
+  const [addOccasion, setAddOccasion] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addPresetYeonId, setAddPresetYeonId] = useState(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
@@ -565,6 +566,7 @@ export default function Page() {
   const seeds = availableSeeds(maeums); // 심어지길 기다리는 박씨
 
   const openAdd = (presetYeonId = null, seedFromId = null) => {
+    setAddOccasion(null);
     setAddPresetYeonId(presetYeonId);
     setAddSeedFrom(seedFromId);
     setAddOpen(true);
@@ -681,6 +683,7 @@ export default function Page() {
           yeons={yeons}
           maeums={maeums}
           presetYeonId={addPresetYeonId}
+          presetOccasion={addOccasion}
           seedFromMaeumId={addSeedFrom}
           seedSupported={store.isSeedSupported()}
           splitsSupported={splitsSupported}
@@ -749,6 +752,7 @@ export default function Page() {
         <MaeumSheet
           maeum={maeumSheet}
           yeonName={yeons.find((y) => y.id === maeumSheet.yeonId)?.name || "소중한 분"}
+          onRecord={() => { const source = maeumSheet; closeMaeumSheet(); openAdd(source.yeonId); setAddOccasion(source); }}
           onClose={closeMaeumSheet}
           onSave={handleSaveMaeum}
           onDelete={askDeleteMaeum}

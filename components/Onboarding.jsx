@@ -403,15 +403,15 @@ export default function Onboarding({ onDone, inviteRef }) {
               </>
             ) : (
               <>
-                홈에서 일정을 다시 확인할 수 있어요.
+                {form.name}님의 {form.event} · {form.date || "날짜 미정"}을 저장했어요. 홈에서 다시 확인할 수 있어요.
                 <br />
                 {form.event === "부고" ? "필요한 순간에 조용히 마음을 챙겨요." : "기억한 소식이 다음 인사로 이어져요."}
               </>
             )}
           </p>
           <div style={{ opacity: planted ? 1 : 0, transition: "opacity 1s .8s", width: "100%" }}>
-            <button className="btn btn-primary" onClick={() => setStage("goal")}>
-              다음
+            <button className="btn btn-primary" onClick={isSample ? () => { setIsSample(false); setStage("manual"); } : finish}>
+              {isSample ? "내 첫 기록 남기기" : "저장한 일정 보러 가기"}
             </button>
           </div>
         </div>
