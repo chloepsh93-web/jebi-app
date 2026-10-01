@@ -1160,3 +1160,60 @@ input.field:focus, textarea.paste:focus, select.field:focus { outline: none; bor
 @media (prefers-reduced-motion: reduce) {
   .split-row:active { transform: none; }
 }
+
+/* 온보딩: 현재 슬라이드 높이만 반영하고 조작 영역은 44px 확보. */
+.intro-track { display: block; }
+.intro-slide img { max-height: min(34dvh, 280px); object-fit: contain; }
+.intro-dots { justify-content: center; gap: 0; }
+.intro-dots button.intro-dot,
+.intro-dots button.intro-dot.on { width: 44px; height: 44px; background: transparent; border-radius: 0; }
+.intro-dots button.intro-dot::after { content: ""; display: block; margin: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--color-dot-inactive); }
+.intro-dots button.intro-dot.on::after { width: 20px; border-radius: 4px; background: var(--color-brand-amber-deep); }
+.intro-next { width: 100%; min-height: 48px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--color-brand-amber-deep); outline-offset: 3px; }
+
+button.me-row { width: 100%; text-align: left; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; min-height: 44px; }
+button.me-row + .me-row { border-top: 1px dashed var(--color-border-strong); }
+
+/* 핵심 화면 v1 — 일정 우선, 기능 텍스트와 삽화의 역할 구분 */
+.home-section-heading { padding: 16px 20px 8px; }
+.home-section-heading h2 { font-family: var(--font-serif), serif; font-size: 22px; font-weight: 400; margin: 6px 0; }
+.home-eyebrow { font-size: 12px; font-weight: 600; color: var(--color-brand-amber-deep); }
+button.schedule-card { display: block; width: calc(100% - 40px); text-align: left; color: inherit; font: inherit; border: 1px solid var(--color-border-subtle); min-height: 80px; }
+.home-glossary { margin: 12px 20px; font-size: 14px; color: var(--color-text-secondary); }
+.home-glossary summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+.big-text .home-section-heading h2 { font-size: 25px; }
+
+/* 기록 목적: 기존 종이색·앰버 토큰과 동일한 시각 체계 */
+.record-purpose { border: 0; padding: 0; margin: 12px 0 20px; min-width: 0; }
+.record-purpose legend { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+.record-purpose-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.record-purpose-options button { min-height: 88px; padding: 12px; border: 1px solid var(--color-border-strong); border-radius: 12px; background: var(--color-surface-card-alt); color: var(--color-text-secondary); text-align: left; font: inherit; cursor: pointer; }
+.record-purpose-options button[aria-pressed="true"] { border: 2px solid var(--color-brand-amber-deep); padding: 11px; color: var(--color-brand-amber-deep); }
+.record-purpose-options b { display: block; font-size: 15px; }
+.record-purpose-options span { display: block; font-size: 14px; line-height: 1.5; margin-top: 6px; }
+.record-error { color: var(--color-semantic-danger); font-size: 14px; line-height: 1.6; margin: 12px 0; }
+button.editable { min-height: 44px; padding: 4px; border: 0; border-bottom: 1px dashed var(--color-brand-amber-deep); background: transparent; color: inherit; font: inherit; text-align: left; }
+@media (max-width: 360px) { .record-purpose-options { grid-template-columns: 1fr; } }
+
+/* 핵심 4화면 공통 마감: 기존 색·삽화 체계 유지 */
+.home-section-heading { padding: 22px 20px 12px; }
+.home-eyebrow { font-size: 14px; }
+.home-caption { font-size: 15px; line-height: 1.75; }
+.sheet .sub, .detail-mode-help { font-size: 14px; line-height: 1.65; }
+.detail-mode-help { color: var(--color-text-secondary); margin: 14px 20px; }
+.mode-btn, .detail-actions .chip-btn { min-height: 44px; }
+.st-row { width: 100%; border: 0; border-bottom: 1px solid var(--color-border-subtle); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; min-height: 56px; }
+.tl-open { width: 100%; border: 1px solid var(--color-border-subtle); border-radius: 14px; padding: 16px; background: var(--color-surface-card-alt); font: inherit; color: inherit; text-align: left; cursor: pointer; min-height: 44px; }
+.sky-section { display: block; width: calc(100% - 40px); border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.record-purpose-options b { line-height: 1.5; }
+@media (max-width: 390px) { .record-purpose-options { grid-template-columns: 1fr; } }
+
+/* 행동 기반 집과 검색 접근성 */
+.yeon-open { border:0; background:transparent; color:inherit; text-align:left; font:inherit; padding:8px 0; cursor:pointer; min-height:44px; }
+.growth-rule { font-size:13px; line-height:1.65; color:var(--color-text-secondary); margin:12px 20px; }
+.home-house-warm { background:radial-gradient(ellipse at 50% 70%, #ffe5a877, transparent 65%); }
+.home-house img { object-fit:contain; }
+@media (max-width:430px) { .home-house { width:min(100%, 330px); margin-inline:auto; } }
+@media (prefers-reduced-motion:reduce) { .sprout-grow,.fade-in { animation:none!important; } }

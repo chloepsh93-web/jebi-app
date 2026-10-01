@@ -22,14 +22,15 @@ function Editable({ value, onChange, placeholder }) {
   const [editing, setEditing] = useState(false);
   if (!editing) {
     return (
-      <span className="editable" onClick={() => setEditing(true)}>
+      <button type="button" className="editable" aria-label={`${placeholder} 수정`} onClick={() => setEditing(true)}>
         {value || placeholder}
-      </span>
+      </button>
     );
   }
   return (
     <input
       autoFocus
+      aria-label={placeholder}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
@@ -62,8 +63,11 @@ const emptyForm = () => ({
   assetKind: "",
 });
 
-export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId = null, seedSupported = true, splitsSupported = false, onClose, onSaved, onToast = null }) {
-  const [step, setStep] = useState("input"); // input → parsing → parseFail → detect/manual
+export default function AddMaeum({ yeons, maeums, presetYeonId, presetOccasion = null, seedFromMaeumId = null, seedSupported = true, splitsSupported = false, onClose, onSaved, onToast = null }) {
+  const [purpose, setPurpose] = useState(seedFromMaeumId || presetOccasion ? "transfer" : "schedule");
+  const [saveError, setSaveError] = useState("");
+  const isTransfer = purpose === "transfer";
+  const [step, setStep] = useState(presetOccasion ? "manual" : "input"); // input → parsing → parseFail → detect/manual
   const [text, setText] = useState("");
   const [parsedEtc, setParsedEtc] = useState(false); // P1-3: 범위 외 소식
   const [form, setForm] = useState(() => {
@@ -73,6 +77,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
       const y = yeons.find((v) => v.id === presetYeonId);
       if (y) { f.yeonId = y.id; f.name = y.name; f.relation = y.relationTag || ""; }
     }
+    if (presetOccasion) Object.assign(f, { event: presetOccasion.eventType, date: presetOccasion.eventDate || "", time: presetOccasion.eventTime || "", place: presetOccasion.place || "", direction: Direction.SENT, assetKind: "" });
     return f;
   });
   const [saving, setSaving] = useState(false);
@@ -155,7 +160,21 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
   const hasOpenGourd = pickedMaeums.some((m) => m.direction === Direction.RECEIVED && !m.repaidAt);
 
   const save = async () => {
-    if (saving) return;
+    if (saving || needPick) return;
+    if (!form.name.trim() || !form.event) {
+      setSaveError("인연 이름과 경조사 종류를 확인해주세요.");
+      return;
+    }
+    const amount = form.amount === "" ? null : Number(String(form.amount).replaceAll(",", ""));
+    if (isTransfer && (amount != null && (!Number.isSafeInteger(amount) || amount < 0 || amount > 2147483647))) {
+      setSaveError("금액은 0원부터 2,147,483,647원까지 입력해주세요.");
+      return;
+    }
+    if (isTransfer && amount == null && !(store.isAssetKindSupported() && form.assetKind)) {
+      setSaveError("금액 또는 실제 전달 방식을 알려주세요. 아직 주고받지 않았다면 일정으로 기록해주세요.");
+      return;
+    }
+    setSaveError("");
     setSaving(true);
     try {
       let y;
@@ -172,28 +191,28 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
       const saved = await store.addMaeum({
         id: form.clientId, // J03 (QA06): 멱등 키 — 중복 요청은 같은 행을 갱신
         yeonId: y.id,
-        direction: form.direction,
+        direction: isTransfer ? form.direction : Direction.RECEIVED,
         eventType: form.event || EventType.OTHER,
-        amount: form.amount ? Number(String(form.amount).replace(/[^0-9]/g, "")) : null,
+        amount: isTransfer ? amount : null,
         memo: form.memo.trim() || null,
         // J03 (QA05): 날짜 미정이면 eventDate는 null, datePrecision은 unknown
         eventDate: form.dateUnknown ? null : (form.date || null),
         datePrecision: form.dateUnknown ? DatePrecision.UNKNOWN : parseDatePrecision(form.date),
         eventTime: form.time || null,
         place: form.place || null,
-        account: form.account || null,
+        account: isTransfer ? (form.account || null) : null,
         plantedAt: Date.now(),
         repaidAt: null,
         remindedAt: null,
-        grownFromSeedId: isReceived && seedId ? seedId : null,
-        assetKind: form.assetKind || null, // 미선택은 null(미표기) — 억지로 채우지 않는다
+        grownFromSeedId: isTransfer && isReceived && seedId ? seedId : null,
+        assetKind: isTransfer && store.isAssetKindSupported() ? (form.assetKind || null) : null, // 미선택은 null(미표기) — 억지로 채우지 않는다
       });
       // 직전 전달 방식 기억 (다음 기록의 기본값)
-      if (form.assetKind) {
+      if (isTransfer && form.assetKind) {
         try { localStorage.setItem(KIND_KEY, form.assetKind); } catch { /* 무시 */ }
       }
       // N빵 분할 — 조용히 시도, 실패해도 마음 저장은 유지 (에러 토스트 없음)
-      if (splitsOn && companionCount > 0) {
+      if (isTransfer && splitsOn && companionCount > 0) {
         try {
           const ok = await probeSplitsSupport();
           if (!ok) {
@@ -223,6 +242,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
     } catch (e) {
       console.error(e);
       setSaving(false);
+      setSaveError("저장하지 못했어요. 입력 내용은 남아 있어요. 다시 시도해주세요.");
       // S02: 저장 실패는 조용히 넘기지 않는다 — 입력은 그대로 두고 알린다
       if (onToast) onToast("저장에 실패했어요. 입력은 그대로 있으니 다시 시도해주세요");
     }
@@ -250,16 +270,32 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
           >
             ‹
           </button>
-          <div className="nav-title">소식 기록하기</div>
+          <div className="nav-title">{isTransfer ? "돈·선물 기록하기" : "일정 기억하기"}</div>
           <div className="nav-spacer" />
         </div>
 
+        {step !== "parsing" && (
+          <fieldset className="record-purpose">
+            <legend>무엇을 기억할까요?</legend>
+            <div className="record-purpose-options">
+              <button type="button" aria-pressed={!isTransfer} onClick={() => { setPurpose("schedule"); setSaveError(""); }}>
+                <b>일정 기억하기</b><span>소식을 남기고 챙길 날을 기억해요</span>
+              </button>
+              <button type="button" aria-pressed={isTransfer} onClick={() => { setPurpose("transfer"); setSaveError(""); }}>
+                <b>돈·선물 기록하기</b><span>실제로 주고받은 마음을 남겨요</span>
+              </button>
+            </div>
+            <p className="edit-hint">일정만 저장하면 참석이나 지출이 완료되지는 않아요.</p>
+          </fieldset>
+        )}
+
         {step === "input" && (
           <>
-            <h3>소식이 도착했나요?</h3>
-            <p className="sub">청첩장·부고 문자를 붙여넣으면 제비가 정리해드려요</p>
+            <h3>{isTransfer ? "주고받은 마음을 기억해요" : "소식이 도착했나요?"}</h3>
+            <p className="sub">{isTransfer ? "문자로 상대와 행사를 찾거나, 직접 입력할 수 있어요. 금액과 전달 방식은 확인 후 알려주세요." : "청첩장·부고 문자를 붙여넣으면 제비가 정리해드려요"}</p>
             <textarea
               className="paste"
+              aria-label="경조사 문자"
               placeholder="문자를 여기에 붙여넣어 보세요"
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -312,7 +348,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
             ) : (
               <>
                 <h3>직접 입력</h3>
-                <p className="sub">확인하고 고친 뒤 지붕에 심어요</p>
+                <p className="sub">누구의 어떤 순간인지 확인하고 기억해요</p>
               </>
             )}
 
@@ -321,7 +357,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
                 <span className="tag">제비가 물어온 소식</span>
                 <div className="row">
                   <span className="k">누구</span>
-                  <Editable value={form.name} placeholder="이름"
+                  <Editable value={form.name} aria-label="인연 이름" placeholder="이름"
                     onChange={(v) => setForm({ ...form, name: v, yeonId: null })} />
                 </div>
                 <div className="row">
@@ -330,7 +366,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
                 </div>
                 <div className="row">
                   <span className="k">어디</span>
-                  <Editable value={form.place} placeholder="장소"
+                  <Editable value={form.place} aria-label="장소" placeholder="장소"
                     onChange={(v) => setForm({ ...form, place: v })} />
                 </div>
                 <div className="edit-hint">잘못된 부분이 있다면 톡 눌러 고칠 수 있어요</div>
@@ -389,43 +425,23 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
               <div className="link-badge">✓ {pickedYeon.name}님과 연결됐어요</div>
             )}
 
-            <label className="fl">받음 / 보냄</label>
-            <select className="field" value={form.direction}
-              onChange={(e) => setForm({ ...form, direction: e.target.value })}>
-              <option value={Direction.RECEIVED}>받은 마음 (지붕에 심김)</option>
-              <option value={Direction.SENT}>보낸 마음 (하늘 궤적)</option>
-            </select>
-
-            {/* 전달 방식 — asset_kind 마이그레이션 전에는 숨김 (점진적 기본값: 첫 1회 명시 선택, 이후 직전 선택 기억) */}
-            {store.isAssetKindSupported() && (
-              <>
-                <label className="fl">어떻게 전했어요?</label>
-                <select className="field" value={form.assetKind}
-                  onChange={(e) => setForm({ ...form, assetKind: e.target.value })}>
-                  <option value="">선택해주세요</option>
-                  <option value={AssetKind.CASH}>현금으로</option>
-                  <option value={AssetKind.GOODS}>선물로</option>
-                </select>
-              </>
-            )}
-
             {step === "manual" && (
               <>
-                <input className="field" placeholder="이름" value={form.name}
+                <input className="field" aria-label="인연 이름" placeholder="이름" value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value, yeonId: null })} />
-                <select className="field" value={form.event}
+                <select className="field" aria-label="경조사 종류" value={form.event}
                   onChange={(e) => setForm({ ...form, event: e.target.value })}>
                   <option value="">경조사 종류</option>
                   <option>결혼</option><option>부고</option><option>돌잔치</option><option>생일</option>
                   <option>기타</option>
                 </select>
-                <input className="field" placeholder="장소" value={form.place}
+                <input className="field" aria-label="장소" placeholder="장소" value={form.place}
                   onChange={(e) => setForm({ ...form, place: e.target.value })} />
               </>
             )}
 
             {step === "detect" && (
-              <select className="field" value={form.event}
+              <select className="field" aria-label="경조사 종류" value={form.event}
                 onChange={(e) => setForm({ ...form, event: e.target.value })}>
                 <option value="">경조사 종류</option>
                 <option>결혼</option><option>부고</option><option>돌잔치</option><option>생일</option>
@@ -442,24 +458,49 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
               onDateUnknownChange={(v) => setForm({ ...form, dateUnknown: v })}
             />
 
-            <input className="field" placeholder="시간 (예: 14:00)" value={form.time}
+            <input className="field" aria-label="시간" placeholder="시간 (예: 14:00)" value={form.time}
               onChange={(e) => setForm({ ...form, time: e.target.value })} />
-            <select className="field" value={form.relation}
+            <select className="field" aria-label="관계" value={form.relation}
               onChange={(e) => setForm({ ...form, relation: e.target.value })}>
               <option value="">관계 (선택)</option>
               <option>가족</option><option>회사</option><option>학교</option><option>지인</option>
             </select>
-            <input className="field" inputMode="numeric" placeholder="전한 마음 (선택)"
+            {isTransfer && (<>
+            <label className="fl">받음 / 보냄</label>
+            <select className="field" aria-label="받음 또는 보냄" value={form.direction}
+              onChange={(e) => setForm({ ...form, direction: e.target.value })}>
+              <option value={Direction.RECEIVED}>받은 마음 (지붕에 심김)</option>
+              <option value={Direction.SENT}>보낸 마음 (하늘 궤적)</option>
+            </select>
+
+            {/* 전달 방식 — asset_kind 마이그레이션 전에는 숨김 (점진적 기본값: 첫 1회 명시 선택, 이후 직전 선택 기억) */}
+            {store.isAssetKindSupported() && (
+              <>
+                <label className="fl">어떻게 전했어요?</label>
+                <select className="field" aria-label="전달 방식" value={form.assetKind}
+                  onChange={(e) => setForm({ ...form, assetKind: e.target.value })}>
+                  <option value="">선택해주세요</option>
+                  <option value={AssetKind.CASH}>현금으로</option>
+                  <option value={AssetKind.GOODS}>선물로</option>
+                </select>
+              </>
+            )}
+
+            </>)}
+
+            {isTransfer && (<>
+            <input className="field" inputMode="numeric" aria-label="금액" placeholder="금액 (미입력 가능 · 0원과 구분)"
               value={form.amount}
               onChange={(e) => {
                 const v = e.target.value.replace(/[^0-9]/g, "");
                 setForm({ ...form, amount: v ? Number(v).toLocaleString() : "" });
               }} />
-            <input className="field" placeholder="한 줄 메모 (선택)" value={form.memo}
+            </>)}
+            <input className="field" aria-label="메모" placeholder="한 줄 메모 (선택)" value={form.memo}
               onChange={(e) => setForm({ ...form, memo: e.target.value })} />
 
             {/* N빵 — 함께한 인연 (maeum_splits 미지원이면 렌더링 안 됨) */}
-            {splitsOn && (
+            {isTransfer && splitsOn && (
               <div className="parsed split-pick">
                 <label className="fl">함께한 인연 (선택)</label>
                 <p className="sub" style={{ margin: "2px 0 8px" }}>
@@ -565,7 +606,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
               </div>
             )}
 
-            {form.account && (
+            {isTransfer && form.account && (
               <div className="copy-ok">
                 <div className="row">
                   <span className="k">계좌</span>
@@ -587,7 +628,7 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
             )}
 
             {/* 정의 순환 — 박씨 함께 심기 (받은 마음만) */}
-            {showSeedPick && isReceived && (
+            {isTransfer && showSeedPick && isReceived && (
               <div className="seed-pick">
                 <div className="fl">박씨 함께 심기</div>
                 <p className="sub" style={{ margin: "2px 0 8px" }}>
@@ -613,8 +654,9 @@ export default function AddMaeum({ yeons, maeums, presetYeonId, seedFromMaeumId 
               </div>
             )}
 
+            {saveError && <p className="record-error" role="alert">{saveError}</p>}
             <button className="btn btn-primary" disabled={saving || needPick} onClick={save}>
-              {saving ? "심는 중…" : isReceived ? "지붕에 심기" : "제비 편에 보내기"}
+              {saving ? "저장하는 중…" : isTransfer ? "주고받은 마음 저장" : "일정 저장하기"}
             </button>
             <button className="btn btn-ghost" onClick={() => setStep("input")}>
               뒤로

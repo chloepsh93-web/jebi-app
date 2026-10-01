@@ -15,7 +15,7 @@ import ThemeToggle from "@/components/ThemeToggle";
  * P2-1: Supabase 보관 안내 (백업)
  * '정' 프레임: 큰 글씨 (시니어 접근성)
  * P0 데이터 복원: 내 기록 지키기 (이메일 연결) / 이미 지킨 기록이 있어요 (로그인)
- * P0-2: CSV 내보내기 — "언제든 가져가실 수 있어요" (무료, 신뢰의 기본값)
+ * P0-2: CSV 내보내기 — "기록 표를 보관해요. 이미지·계정·박씨 연결의 전체 백업은 아니에요" (무료, 신뢰의 기본값)
  * P0-4: 백업 상태 UI — 마지막 동기화 시각 + 복원 가능 상태
  * P0-1a: 푸시 구독 수집 — "다가오는 소식을 제비가 알려드려요" (발송 없이 수집만)
  */
@@ -130,7 +130,7 @@ export default function Me({
         <div className="guard-card">
           <div className="guard-title">내 기록 지키기</div>
           <div className="guard-sub">
-            아직 기록이 이 기기에만 있어요. 이메일만 연결하면 제비가 이어가요.
+            기록은 서버에 저장돼요. 이메일을 연결해야 기기를 바꾸거나 브라우저 데이터를 지운 뒤에도 다시 찾을 수 있어요.
           </div>
           <button className="btn btn-primary" onClick={onGuardLink}>
             이메일 연결하기
@@ -141,32 +141,32 @@ export default function Me({
         </div>
       )}
 
-      <div className="me-row" onClick={onOpenSettlement}>
+      <button type="button" className="me-row" onClick={onOpenSettlement}>
         <span>{COPY.SETTLEMENT.navTitle}</span><span className="chev">›</span>
-      </div>
-      <div className="me-row" onClick={onOpenYearReport}>
+      </button>
+      <button type="button" className="me-row" onClick={onOpenYearReport}>
         <span>
           🕊 올해의 인연 돌아보기
           <span className="me-hint">정이 오간 한 해</span>
         </span>
         <span className="chev">›</span>
-      </div>
+      </button>
       {/* P0-2: CSV 내보내기 (무료) */}
-      <div className="me-row" onClick={handleExport}>
+      <button type="button" className="me-row" onClick={handleExport}>
         <span>
           📥 내 기록 내보내기 (CSV)
-          <span className="me-hint">언제든 가져가실 수 있어요</span>
+          <span className="me-hint">기록 표를 보관해요. 이미지·계정·박씨 연결의 전체 백업은 아니에요</span>
         </span>
         <span className="chev">›</span>
-      </div>
+      </button>
       {/* P0-3: CSV 가져오기 (들여오기) */}
-      <div className="me-row" onClick={() => { if (!importing) fileRef.current?.click(); }}>
+      <button type="button" className="me-row" onClick={() => { if (!importing) fileRef.current?.click(); }}>
         <span>
           📥 내 기록 들여오기 (CSV)
           <span className="me-hint">{importing ? "기록을 심는 중이에요…" : "예전에 내보낸 기록을 다시 심어요"}</span>
         </span>
         <span className="chev">›</span>
-      </div>
+      </button>
       <input
         ref={fileRef}
         type="file"
@@ -177,23 +177,23 @@ export default function Me({
         onChange={handleImportFile}
       />
       {/* P0-1a: 푸시 구독 수집 */}
-      <div className="me-row" onClick={togglePush}>
+      <button type="button" className="me-row" onClick={togglePush} aria-pressed={pushOn}>
         <span>
           🔔 소식을 제비가 알려드려요
           <span className="me-hint">{pushHint}</span>
         </span>
         <span className={`switch${pushOn ? " on" : ""}`} aria-hidden><i /></span>
-      </div>
-      <div className="me-row" onClick={onInvite}>
+      </button>
+      <button type="button" className="me-row" onClick={onInvite}>
         <span>💌 친구에게 제비 알리기</span><span className="chev">›</span>
-      </div>
-      <div className="me-row" onClick={onToggleBigText}>
+      </button>
+      <button type="button" className="me-row" onClick={onToggleBigText} aria-pressed={bigText}>
         <span>
           🔍 큰 글씨로 보기
           <span className="me-hint">눈이 편한 크기로 바꿔드려요</span>
         </span>
         <span className={`switch${bigText ? " on" : ""}`} aria-hidden><i /></span>
-      </div>
+      </button>
       {/* 라운드2: 밤의 박 테마 — 낮/밤/기기에 따라 3선택 (기본 기기에 따라) */}
       <div className="me-row me-row-static">
         <span>
@@ -202,15 +202,15 @@ export default function Me({
         </span>
       </div>
       <ThemeToggle />
-      <div className="me-row" onClick={onReplayOnboarding}>
+      <button type="button" className="me-row" onClick={onReplayOnboarding}>
         <span>🐦 온보딩 다시 보기</span><span className="chev">›</span>
-      </div>
-      <div className="me-row" onClick={onReset}>
+      </button>
+      <button type="button" className="me-row" onClick={onReset}>
         <span style={{ color: "var(--color-semantic-danger)" }}>데이터 초기화</span><span className="chev">›</span>
-      </div>
-      <div className="me-row" onClick={onWithdraw}>
+      </button>
+      <button type="button" className="me-row" onClick={onWithdraw}>
         <span style={{ color: "var(--color-semantic-danger)" }}>탈퇴하기</span><span className="chev">›</span>
-      </div>
+      </button>
 
       <div className="me-legal">
         <a href="/privacy">개인정보처리방침</a>
@@ -222,9 +222,9 @@ export default function Me({
       <Glossary />
 
       <p className="empty" style={{ paddingTop: 24 }}>
-        모든 기록은 서버에 안전하게 보관돼요.
+        저장에 성공한 기록은 서버에 보관돼요.
         <br />
-        기기 변경 시 이어보기는 준비 중이에요.
+        이메일 연결 후 같은 이메일로 로그인하면 기록을 이어볼 수 있어요.
         {!splitsSupported && (
           <>
             <br />

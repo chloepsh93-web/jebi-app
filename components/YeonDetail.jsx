@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GourdState, Direction, AssetKind, computeGourdState, summarizeYeon, transfersOf } from "@/lib/model";
+import { GourdState, Direction, AssetKind, computeGourdState, summarizeYeon, transfersOf, isTransferRecord } from "@/lib/model";
 import { store } from "@/lib/store";
 import { splitLabel } from "@/lib/splits";
 import { formatShort, relTime, won, ym } from "@/lib/format";
@@ -111,7 +111,7 @@ export default function YeonDetail({
             {yeon.relationTag && <span className="detail-tag">{yeon.relationTag}</span>}
           </p>
           <p className="tl-sub">
-            {yeon.relationTag || "지인"} · 주고받은 마음 {maeums.length}개
+            {yeon.relationTag || "지인"} · 기억 {maeums.length}개
           </p>
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function YeonDetail({
       </div>
 
       {/* P1-2: 차액 문장형 요약 카드 — 숫자를 문장으로 번역 */}
-      {balanceCopy && (
+      {mode === "정산" && balanceCopy && (
         <div className="yeon-balance">
           <p className={`bal-main ${balanceCopy.cls}`}>{balanceCopy.text}</p>
           <p className="bal-sub tnum">
@@ -145,7 +145,7 @@ export default function YeonDetail({
             role="tab"
             aria-selected={mode === "마음"}
           >
-            마음 모드
+            인연의 기억
           </button>
           <button
             className={`mode-btn${mode === "정산" ? " on" : ""}`}
@@ -153,18 +153,20 @@ export default function YeonDetail({
             role="tab"
             aria-selected={mode === "정산"}
           >
-            정산 모드
+            돈·선물 기록
           </button>
         </div>
       )}
 
+      <p className="detail-mode-help">{mode === "정산" ? "실제로 주고받은 돈·선물만 모았어요. 금액은 관계의 점수가 아니에요." : "소식과 주고받은 마음을 날짜순으로 돌아봐요."}</p>
       {mode === "정산" && sorted.length > 0 ? (
         /* 정산 모드 — 건별 전한 마음 표 (tabular-nums로 자릿수 흔들림 방지) */
         <div className="settle-list">
-          {sorted.map((m) => {
+          {transfersOf(sorted).length === 0 && <p className="detail-mode-help">아직 돈·선물 기록이 없어요. 일정은 인연의 기억에서 볼 수 있어요.</p>}
+          {transfersOf(sorted).map((m) => {
             const sent = m.direction === Direction.SENT;
             return (
-              <div className="st-row" key={m.id} onClick={() => onOpenMaeum(m)}>
+              <button type="button" className="st-row" key={m.id} onClick={() => onOpenMaeum(m)}>
                 <span className="st-when">
                   {m.eventDate && !m.eventDate.startsWith("????")
                     ? formatShort(m.eventDate)
@@ -174,16 +176,16 @@ export default function YeonDetail({
                 <span className={`st-dir ${sent ? "sent" : "recv"}`}>
                   {sent ? "전한" : "받은"}
                 </span>
-                <span className="st-amt tnum">{m.amount != null ? won(m.amount) : "—"}</span>
-              </div>
+                <span className="st-amt tnum">{m.amount != null ? won(m.amount) : "금액 미입력"}</span>
+              </button>
             );
           })}
         </div>
       ) : sorted.length === 0 ? (
         <p className="empty">
-          아직 주고받은 마음이 없어요.
+          아직 남겨둔 기억이 없어요.
           <br />
-          첫 마음을 기록하면 이 인연의 박이 자라기 시작해요.
+          첫 소식부터 이 인연의 이야기를 기억해요.
           <br />
           <button className="btn btn-primary" onClick={() => onAddMaeum(yeon.id)}>
             첫 마음 기록하기
@@ -195,12 +197,15 @@ export default function YeonDetail({
             {sorted.map((m) => {
               const st = computeGourdState(m);
               const tag = ST_TAG[st] || { t: "", c: "" };
-              const repayable = m.direction === Direction.RECEIVED && !m.repaidAt;
+              const transfer = isTransferRecord(m);
+              const repayable = transfer && m.direction === Direction.RECEIVED && !m.repaidAt;
               const sent = m.direction === Direction.SENT;
               const seedName = seedYeonNameOf(m);
               return (
-                <div className={`tl-event ${tag.c}`} key={m.id} onClick={() => onOpenMaeum(m)}>
+                <div className={`tl-event ${tag.c}`} key={m.id} >
+                  <button type="button" className="tl-open" onClick={() => onOpenMaeum(m)}>
                   <div className="tl-tags">
+                    {!transfer && <span className="tag">일정</span>}
                     {tag.t && <span className={`tag ${tag.c}`}>{tag.t}</span>}
                     {sent && <span className="tag dir-sent">보냄</span>}
                     {m.grownFromSeedId && <span className="tag seed-grown">박씨에서 자란 박</span>}
@@ -212,7 +217,7 @@ export default function YeonDetail({
                     </span>
                   </div>
                   <p className="tl-what">
-                    {m.memo || `${m.eventType || "경조사"} · ${sent ? "마음을 전했어요" : "마음을 받았어요"}`}
+                    {m.memo || `${m.eventType || "경조사"} · ${!transfer ? "소식을 기억해요" : sent ? "마음을 전했어요" : "마음을 받았어요"}`}
                   </p>
                   {seedName && <div className="tl-seed">{seedName}님의 박씨에서 자랐어요</div>}
                   {splitTextOf(m) && <div className="tl-seed">{splitTextOf(m)}</div>}
@@ -220,14 +225,15 @@ export default function YeonDetail({
                   {m.amount != null && (
                     <div className="tl-amt tnum">{amtLabel(m)} 마음 · {won(m.amount)}</div>
                   )}
-                  {m.repaidAt && <div className="tl-done">✓ 다녀왔어요 · 박이 열렸어요</div>}
+                  {m.repaidAt && <div className="tl-done">✓ 마음에 답한 기록</div>}
+                  </button>
                   {repayable && (
                     <div className="tl-repay">
                       <button
                         className="btn-inline btn-primary"
                         onClick={(e) => { e.stopPropagation(); onRepay(m.id); }}
                       >
-                        다녀왔어요
+                        마음에 답했어요
                       </button>
                     </div>
                   )}

@@ -12,9 +12,9 @@ import DateField from "./DateField";
 import { Glossary } from "./ui";
 
 /**
- * 인터랙티브 온보딩 — 첫 박 심기
+ * 인터랙티브 온보딩 — 첫 소식 기록
  * jebi-onboarding-interactive.html 기준:
- * 인트로 슬라이드 4장(스와이프) → 입력(샘플/직접) → 파싱 중 → 확인(수정 가능) → 심기 → 목표 → 완료
+ * 인트로 슬라이드 3장(스와이프) → 입력(샘플/직접) → 파싱 중 → 확인(수정 가능) → 심기 → 목표 → 완료
  * 카드로 설명하지 않고, 첫 인연을 직접 심게 만든다.
  */
 const SAMPLE =
@@ -25,40 +25,25 @@ const EVENTS = ["결혼", "부고", "돌잔치", "생일"];
 /** 인트로 슬라이드 — '마음·박·인연·제비' 세계관 소개 */
 const INTRO_SLIDES = [
   {
-    kicker: "마음",
+    kicker: "정을 기억하는 제비",
     art: A.house_jebi_intro,
-    alt: "편지를 문 제비",
-    title: "받은 마음이\n자라는 집",
-    desc: "결혼식, 돌잔치, 부고… 문자로 날아오는 소식을 마음으로 심으면 지붕 위에 박이 자라요.",
+    alt: "제비가 머무는 초가집",
+    title: "마음을 챙기면,\n인연이 자라는 집",
+    desc: "흥부가 제비에게 건넨 정이 박씨로 돌아왔듯, 주변의 소중한 순간을 함께 기억해요.",
   },
   {
-    kicker: "박",
-    art: A.gourd_big,
-    alt: "지붕 위 박",
-    title: "박은 마음의\n약속이에요",
-    desc: COPY.ONBOARDING.ripeDesc,
-  },
-  {
-    kicker: "제비",
+    kicker: "소중한 순간을 놓치지 않게",
     art: A.jebi_perched,
-    alt: "지붕 위 제비",
-    title: "제비가 소식을\n물어다 줘요",
-    desc: "다가오는 경조사를 먼저 알려주고, 다녀온 뒤엔 감사의 마음을 전할 때를 일러줘요.",
+    alt: "소식을 전하는 제비",
+    title: "소식을 건네고,\n일정을 기억해요",
+    desc: "청첩장·부고 문자를 확인해 일정으로 기록해요. 돈·선물은 실제 주고받은 뒤 따로 남겨요.",
   },
   {
-    kicker: "인연",
+    kicker: "정이 쌓이는 우리 집",
     art: A.house_gourds,
-    alt: "정이 가득한 집",
-    title: "인연의 정이\n쌓여요",
-    desc: COPY.ONBOARDING.yearDesc,
-    glossary: true,
-  },
-  {
-    kicker: "박씨",
-    art: A.sprout,
-    alt: "새 박씨",
-    title: "정은 박씨가 되어\n다시 돌아와요",
-    desc: "옛날 옛적, 흥부가 제비를 고쳐 보내자 제비가 박씨를 물어왔어요. 이 앱의 제비도 그래요. 제비가 소식을 물어다 주면, 당신이 정을 심어요.",
+    alt: "정이 쌓이는 같은 초가집",
+    title: "기억한 마음이,\n다음 인사로 이어져요",
+    desc: "참석과 안부, 주고받은 기록을 인연별로 돌아봐요. 복은 더 따뜻해진 관계의 이야기예요.",
   },
 ];
 
@@ -96,10 +81,10 @@ function IntroSlides({ onDone, onSkip, invite }) {
       >
         <div
           className="intro-track"
-          style={{ transform: `translateX(-${idx * 100}%)` }}
+          aria-live="polite" aria-atomic="true"
         >
-          {INTRO_SLIDES.map((s, i) => (
-            <div className="intro-slide" key={i}>
+          {INTRO_SLIDES.filter((_, i) => i === idx).map((s) => (
+            <div className="intro-slide" key={idx}>
               <img className="ob-hero" src={s.art} alt={s.alt} />
               <div className="intro-kicker">{s.kicker}</div>
               <h2 className="serif">
@@ -123,6 +108,7 @@ function IntroSlides({ onDone, onSkip, invite }) {
             className={`intro-dot${i === idx ? " on" : ""}`}
             onClick={() => setIdx(i)}
             aria-label={`${i + 1}번 슬라이드`}
+            aria-current={i === idx ? "step" : undefined}
           />
         ))}
       </div>
@@ -185,6 +171,7 @@ export default function Onboarding({ onDone, inviteRef }) {
   const [form, setForm] = useState({ name: "", event: "", date: "", time: "", place: "" });
   const [planted, setPlanted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const startParse = () => {
     if (!text.trim()) return;
@@ -210,7 +197,12 @@ export default function Onboarding({ onDone, inviteRef }) {
 
   const plant = async () => {
     if (saving) return;
+    if (!form.name.trim() || !form.event) {
+      setSaveError("인연 이름과 경조사 종류를 확인해주세요.");
+      return;
+    }
     setSaving(true);
+    setSaveError("");
     try {
       // J05: 예시 문자는 저장하지 않는다 — 김도현 같은 가짜 인연이
       // 실제 인연 목록·집계에 섞이지 않도록. 애니메이션만 보여준다.
@@ -230,9 +222,12 @@ export default function Onboarding({ onDone, inviteRef }) {
           repaidAt: null,
           remindedAt: null,
         });
+        logEvent("occasion_saved", {}, "welcome");
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      setSaveError("저장하지 못했어요. 입력 내용은 남아 있어요. 다시 시도해주세요.");
+      setSaving(false);
+      return;
     }
     setSaving(false);
     setStage("plant");
@@ -335,6 +330,7 @@ export default function Onboarding({ onDone, inviteRef }) {
 
       {stage === "confirm" && (
         <div className="ob-card fade-in">
+          {saveError && <div className="error-box" role="alert">{saveError}</div>}
           <h2 className="ob-head sm">
             제비가 이렇게
             <br />
@@ -387,18 +383,16 @@ export default function Onboarding({ onDone, inviteRef }) {
       {stage === "plant" && (
         <div className="ob-card">
           <img
-            className="ob-hero sprout-grow"
-            src={A.sprout_closeup}
-            alt="첫 새싹"
+            className={`ob-hero${form.event === "부고" ? "" : " sprout-grow"}`}
+            src={form.event === "부고" ? A.jebi_perched : A.sprout_closeup}
+            alt={form.event === "부고" ? "조용히 곁에 있는 제비" : "첫 새싹"}
             style={{ opacity: planted ? 1 : 0, transform: planted ? "none" : "scale(0.96)" }}
           />
           <h2
             className="serif ob-head"
             style={{ opacity: planted ? 1 : 0, transition: "opacity 1s .3s" }}
           >
-            첫 마음이
-            <br />
-            지붕에 심어졌어요
+            {isSample ? "기록 흐름을 체험했어요" : form.event === "부고" ? "조용히 소식을 기록했어요" : "소식을 기억했어요"}
           </h2>
           <p className="ob-sub" style={{ opacity: planted ? 1 : 0, transition: "opacity 1s .5s" }}>
             {isSample ? (
@@ -409,15 +403,15 @@ export default function Onboarding({ onDone, inviteRef }) {
               </>
             ) : (
               <>
-                당신의 집이 시작됐어요.
+                {form.name}님의 {form.event} · {form.date || "날짜 미정"}을 저장했어요. 홈에서 다시 확인할 수 있어요.
                 <br />
-                박이 열리면 제비가 새 박씨를 물어와요
+                {form.event === "부고" ? "필요한 순간에 조용히 마음을 챙겨요." : "기억한 소식이 다음 인사로 이어져요."}
               </>
             )}
           </p>
           <div style={{ opacity: planted ? 1 : 0, transition: "opacity 1s .8s", width: "100%" }}>
-            <button className="btn btn-primary" onClick={() => setStage("goal")}>
-              다음
+            <button className="btn btn-primary" onClick={isSample ? () => { setIsSample(false); setStage("manual"); } : finish}>
+              {isSample ? "내 첫 기록 남기기" : "저장한 일정 보러 가기"}
             </button>
           </div>
         </div>
@@ -425,16 +419,12 @@ export default function Onboarding({ onDone, inviteRef }) {
 
       {stage === "goal" && (
         <div className="ob-card fade-in">
-          <img className="ob-hero" src={A.house_gourds} alt="가득 찬 우리 집" />
+          <img className="ob-hero" src={form.event === "부고" ? A.house_empty : A.house_gourds} alt={form.event === "부고" ? "마음을 기억하는 우리 집" : "가득 찬 우리 집"} />
           <h2 className="serif ob-head">
-            언젠가 당신의 집도
-            <br />
-            이렇게 가득 차요
+            {form.event === "부고" ? "소중한 인연을 기억하는 집" : "정을 건네며 인연을 이어가요"}
           </h2>
           <p className="ob-sub">
-            주고받은 마음이 쌓일수록
-            <br />
-            지붕은 박으로, 집은 온기로 가득해져요
+            {form.event === "부고" ? "곁에 있고 싶은 순간을 잊지 않도록 도와드릴게요." : "기록한 마음이 다음 소중한 순간을 챙기는 데 도움이 돼요."}
           </p>
           <p className="ob-badge">받은 마음도, 전할 마음도 놓치지 않게 — 제비</p>
           <Dots n={3} />

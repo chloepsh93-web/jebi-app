@@ -11,7 +11,7 @@ import AffiliateNudge from "./AffiliateNudge";
 import { COPY } from "@/lib/copy";
 
 const GOURD_IMG = {
-  [GourdState.SPROUT]: A.gourd_small,
+  [GourdState.SPROUT]: A.sprout,
   [GourdState.GROWING]: A.gourd_small,
   [GourdState.RIPE]: A.gourd_big,
   [GourdState.OLD_RIPE]: A.gourd_old,
@@ -74,7 +74,51 @@ export default function Home({
         </button>
       </div>
 
-      <div className="home-house">
+      <div className="home-section-heading">
+        <span className="home-eyebrow">오늘 챙길 마음</span>
+        <h2>다가오는 인연의 순간</h2>
+      </div>
+      {/* 다가오는 경조사 — 목업 schedule-card 스펙 */}
+      {/* QA16: 예정 없음도 구분된 안내 */}
+      {!upcoming && (
+        <div className="schedule-card schedule-empty">
+          <span className="txt" style={{ color: "var(--color-text-secondary)" }}>
+            {empty ? "첫 소식을 기록하면 다가오는 일정을 여기서 볼 수 있어요." : "다가오는 경조사가 없어요. 날짜가 정해진 소식을 기록해주세요."}
+          </span>
+        </div>
+      )}
+      {upcoming && (
+        <button type="button" className="schedule-card" onClick={() => onOpenYeon(upcoming.yeonId)}>
+          <div className="row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            <span className="txt">
+              {formatShort(upcoming.eventDate)} · {nameOf(upcoming.yeonId)} {upcoming.eventType}
+            </span>
+            <span className="dday">{dday(upcoming.eventDate)}</span>
+          </div>
+          <div className="subrow">
+            {upcoming.eventType === "부고" ? "조문 일정 확인하기 ›" : "일정 확인하기 ›"}
+          </div>
+        </button>
+      )}
+
+      {/* J06/S04: 날짜 미정 경조사 — 예정 순에서 제외되지만 확인 필요 섹션에 표시 */}
+      {dateless.length > 0 && (
+        <div className="dateless-card">
+          <p className="dateless-title">날짜를 몰라요 · {dateless.length}건</p>
+          {dateless.slice(0, 3).map((m) => (
+            <button key={m.id} className="dateless-row" onClick={() => onOpenYeon(m.yeonId)}>
+              <span className="dateless-txt">{nameOf(m.yeonId)} · {m.eventType}</span>
+              <span className="dateless-go">날짜 정하기 ›</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className={`home-house${stats.warmthCount > 0 ? " home-house-warm" : ""}`}>
         <img className="house" src={A.house_empty} alt="우리 집" />
         <img className="jebi-nest" src={A.jebi_perched} alt="둥지 곁 제비" />
         {roofGourds.slice(0, 5).map((m, i) => {
@@ -91,34 +135,31 @@ export default function Home({
 
       {empty ? (
         <p className="home-caption">
-          아직 지붕이 비어 있어요.
+          첫 기록부터 우리 집의 이야기가 시작돼요.
           <br />
-          받은 마음은 지붕 위 <span className="em">박</span>으로 자라고,
-          <br />
-          {COPY.HOME.emptyCaption}
-          <br />
-          <span className="em">첫 소식</span>을 기록하면 우리 집이 시작돼요.
+          소식을 기억하고, 소중한 순간을 챙겨요.
         </p>
       ) : (
         <p className="home-caption">
           지붕 위 <span className="em">박 {stats.oweCount}개</span>가 자라고 있어요
           <br />
-          전한 마음 {stats.warmthCount}개가 우리 집을 밝히고 있어요
+          답한 마음 {stats.warmthCount}개가 우리 집을 밝히고 있어요
         </p>
       )}
 
       <div className="home-stats">
         <div className="stat">
-          <div className="lbl">{COPY.HOME.dueLabel}</div>
+          <div className="lbl">받은 마음</div>
           <div className="val">{stats.oweCount}<span className="sub">개 · 지붕 위</span></div>
         </div>
         <div className="stat">
-          <div className="lbl">전한 마음</div>
+          <div className="lbl">답한 마음</div>
           <div className="val">{stats.warmthCount}<span className="sub">개 · 온기</span></div>
         </div>
       </div>
 
-      <Glossary compact />
+      <p className="growth-rule">받은 마음은 새싹으로, 참석 예정은 자라는 박으로, 참석함은 익은 박으로 보여요. 마음에 답했다고 표시하면 집에 온기가 더해져요. 금액이나 시간만으로 자라지는 않아요.</p>
+      <details className="home-glossary"><summary>제비의 말이 궁금해요</summary><Glossary compact /></details>
 
       {/* 정의 순환 — 심어지길 기다리는 박씨 */}
       {seeds.length > 0 && (
@@ -152,48 +193,6 @@ export default function Home({
         </div>
       )}
 
-      {/* 다가오는 경조사 — 목업 schedule-card 스펙 */}
-      {/* QA16: 예정 없음도 구분된 안내 */}
-      {!upcoming && maeums.length > 0 && (
-        <div className="schedule-card schedule-empty">
-          <span className="txt" style={{ color: "var(--color-text-2)" }}>
-            다가오는 경조사가 없어요. 날짜를 정하면 제비가 알려드려요.
-          </span>
-        </div>
-      )}
-      {upcoming && (
-        <div className="schedule-card" onClick={() => onOpenYeon(upcoming.yeonId)}>          <div className="row">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <path d="M16 2v4M8 2v4M3 10h18" />
-            </svg>
-            <span className="txt">
-              {formatShort(upcoming.eventDate)} · {nameOf(upcoming.yeonId)} {upcoming.eventType}
-            </span>
-            <span className="dday">{dday(upcoming.eventDate)}</span>
-          </div>
-          <div className="subrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-            {upcoming.amount ? `전한 마음 ${Number(upcoming.amount).toLocaleString()}원 준비` : "마음 준비 완료"}
-          </div>
-        </div>
-      )}
-
-      {/* J06/S04: 날짜 미정 경조사 — 예정 순에서 제외되지만 확인 필요 섹션에 표시 */}
-      {dateless.length > 0 && (
-        <div className="dateless-card">
-          <p className="dateless-title">날짜를 몰라요 · {dateless.length}건</p>
-          {dateless.slice(0, 3).map((m) => (
-            <button key={m.id} className="dateless-row" onClick={() => onOpenYeon(m.yeonId)}>
-              <span className="dateless-txt">{nameOf(m.yeonId)} · {m.eventType}</span>
-              <span className="dateless-go">날짜 정하기 ›</span>
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* "챙길 때" — 다가오는 경조사 돌봄 (어필리에이트 UI 구조) */}
       {upcomingNudge && <AffiliateNudge nudge={upcomingNudge} maeums={maeums} />}
 
@@ -203,10 +202,10 @@ export default function Home({
           <div className="repay-body">
             <b>{nameOf(m.yeonId)}</b>님과의 박이 익었어요
             <br />
-            <span className="repay-sub">{COPY.HOME.repaySub}</span>
+            <span className="repay-sub">기억해둔 마음을 다시 살펴볼까요?</span>
           </div>
-          <button className="btn-inline btn-primary" onClick={() => onRepay(m.id)}>
-            다녀왔어요
+          <button className="btn-inline btn-primary" onClick={() => onOpenYeon(m.yeonId)}>
+            기록 확인하기
           </button>
         </div>
       ))}
@@ -218,15 +217,15 @@ export default function Home({
 
       {/* 제비 편에 보낸 마음 (하늘) */}
       {sentOpen.length > 0 && (
-        <div className="sky-section" onClick={onOpenSent}>
+        <button type="button" className="sky-section" onClick={onOpenSent}>
           <div className="sky-title">제비 편에 보낸 마음</div>
           <div className="sky-sub">
             하늘을 나는 제비 {Math.min(sentOpen.length, 5)}
             <br />
-            아직 답례를 기다리는 마음이 하늘에 있어요
+            남겨둔 전한 마음을 돌아봐요
           </div>
           <div className="sky-more">전체 보기 ›</div>
-        </div>
+        </button>
       )}
 
       <button className="fab" onClick={onAdd}>

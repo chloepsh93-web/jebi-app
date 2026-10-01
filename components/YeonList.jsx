@@ -82,10 +82,10 @@ export default function YeonList({ yeons, maeums, tagsByYeon = null, tagsSupport
       .sort((a, b) => b.plantedAt - a.plantedAt);
     const latest = ms[0];
     const st = latest ? computeGourdState(latest) : null;
-    return { y, latest, st, count: ms.length };
+    return { y, latest, st, count: ms.length, searchable: [y.name, y.relationTag, ...ms.flatMap(m => [m.eventType, m.memo, m.place, m.eventDate])].filter(Boolean).join(" ").toLocaleLowerCase() };
   })
     .filter(({ y }) => !tagFilter || tagsOf(y.id).includes(tagFilter))
-    .filter(({ y }) => !q || y.name.includes(q))
+    .filter(({ searchable }) => !q || searchable.includes(q.toLocaleLowerCase()))
     .sort((a, b) => (b.latest?.plantedAt || 0) - (a.latest?.plantedAt || 0));
 
   return (
@@ -99,7 +99,7 @@ export default function YeonList({ yeons, maeums, tagsByYeon = null, tagsSupport
         <input
           type="search"
           className="field"
-          placeholder="이름으로 찾기"
+          placeholder="이름·경조사·메모·장소로 찾기"
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           aria-label="인연 검색"
@@ -144,9 +144,9 @@ export default function YeonList({ yeons, maeums, tagsByYeon = null, tagsSupport
           const dup = nameCounts[y.name] > 1;
           const ytags = tagsOf(y.id);
           return (
-            <div className="yeon-item" key={y.id} onClick={() => onOpen(y.id)}>
+            <div className="yeon-item" key={y.id}>
               <Avatar gender={y.avatarGender} name={y.name} size={48 /* v2.1: --size-avatar-md */} />
-              <div className="yeon-main">
+              <button type="button" className="yeon-main yeon-open" onClick={() => onOpen(y.id)}>
                 <div className="y-tags">
                   <span className="y-dot" style={{ background: tc.c }} />
                   <span className="y-tag">{tc.t}</span>
@@ -172,7 +172,7 @@ export default function YeonList({ yeons, maeums, tagsByYeon = null, tagsSupport
                     ))}
                   </div>
                 )}
-              </div>
+              </button>
               <button
                 className="chip-btn yeon-edit"
                 onClick={(e) => { e.stopPropagation(); onEdit(y); }}

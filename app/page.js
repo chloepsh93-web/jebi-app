@@ -5,6 +5,7 @@ import { isConfigured, supabase } from "@/lib/supabase";
 import { store } from "@/lib/store";
 import { logEvent } from "@/lib/metrics";
 import { computeAlerts } from "@/lib/alerts";
+import { formatShort } from "@/lib/format";
 import { availableSeeds, isTransferRecord } from "@/lib/model";
 import Onboarding from "@/components/Onboarding";
 import Home from "@/components/Home";
@@ -55,6 +56,7 @@ export default function Page() {
   const [settlementOpen, setSettlementOpen] = useState(false);
   // 라운드2 — 올해의 인연 돌아보기
   const [yearReportOpen, setYearReportOpen] = useState(false);
+  const [addOccasion, setAddOccasion] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addPresetYeonId, setAddPresetYeonId] = useState(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
@@ -253,6 +255,7 @@ export default function Page() {
       setOnboarded(ob);
       setBigText(store.isBigText());
       setPhase("main");
+      logEvent("session_started", {}, "home");
     } catch (e) {
       console.error(e);
       setLoadError(e.message || "데이터를 불러오지 못했어요.");
@@ -307,7 +310,7 @@ export default function Page() {
         // 세션 전환 완료 — 영구 계정으로 데이터를 다시 읽는다
         await refresh();
         if (event === "USER_UPDATED") logEvent("guard_linked");
-        if (event === "SIGNED_IN") logEvent("guard_restored");
+        if (event === "SIGNED_IN") logEvent("session_authenticated");
         // 병합 제안은 매직링크 로그인(SIGNED_IN) 완료 시에만.
         // 익명→이메일 전환(link)은 같은 user id라 병합이 필요 없고,
         // 낡은 스냅샷이 남아 있어도 anonId가 같으면 건너뛰어 중복 복사를 막는다.
@@ -340,6 +343,8 @@ export default function Page() {
       stageSnapshot(snap); // 매직링크 클릭 시 리로드에 대비해 localStorage에도 보관
     } catch {
       mergeSnapRef.current = null;
+      showToast("기록을 확인하지 못했어요. 로그인 전에 다시 시도해주세요.");
+      return;
     }
     setGuardFlow("login");
   };
@@ -411,7 +416,7 @@ export default function Page() {
     try {
       await store.updateMaeum(mid, { remindedAt: Date.now() });
       await refresh();
-      logEvent("care_saved", {}, "home"); // J10 사전 — 저장 성공 후에만
+      logEvent("reminder_snoozed", {}, "home"); // 알림 미루기는 실제 챙김 완료가 아니다
       showToast(msg);
     } catch (e) {
       showToast("저장에 실패했어요. 다시 시도해주세요");
@@ -562,6 +567,7 @@ export default function Page() {
   const seeds = availableSeeds(maeums); // 심어지길 기다리는 박씨
 
   const openAdd = (presetYeonId = null, seedFromId = null) => {
+    setAddOccasion(null);
     setAddPresetYeonId(presetYeonId);
     setAddSeedFrom(seedFromId);
     setAddOpen(true);
@@ -678,6 +684,7 @@ export default function Page() {
           yeons={yeons}
           maeums={maeums}
           presetYeonId={addPresetYeonId}
+          presetOccasion={addOccasion}
           seedFromMaeumId={addSeedFrom}
           seedSupported={store.isSeedSupported()}
           splitsSupported={splitsSupported}
@@ -699,8 +706,12 @@ export default function Page() {
               const sname = seed ? yeons.find((y) => y.id === seed.yeonId)?.name : null;
               triggerDelight(sname ? `${sname}님의 박씨에서 새 박이 자라나고 있어요` : "박씨에서 새 박이 자라나고 있어요");
             } else {
-              // P1-6 기록 완료 delight — "마음이 박에 담겼어요"
-              triggerDelight("마음이 박에 담겼어요");
+              // P1 첫 경험: 저장 결과에 이름·행사·날짜 표시
+              const yname = yeons.find((y) => y.id === saved?.yeonId)?.name;
+              const when = saved?.eventDate && !String(saved.eventDate).startsWith("????")
+                ? formatShort(saved.eventDate) : null;
+              const detail = [yname ? `${yname}님` : null, saved?.eventType, when].filter(Boolean).join(" · ");
+              triggerDelight(detail ? `${detail} — 마음이 박에 담겼어요` : "마음이 박에 담겼어요");
             }
             await refresh();
           }}
@@ -746,6 +757,7 @@ export default function Page() {
         <MaeumSheet
           maeum={maeumSheet}
           yeonName={yeons.find((y) => y.id === maeumSheet.yeonId)?.name || "소중한 분"}
+          onRecord={() => { const source = maeumSheet; closeMaeumSheet(); openAdd(source.yeonId); setAddOccasion(source); }}
           onClose={closeMaeumSheet}
           onSave={handleSaveMaeum}
           onDelete={askDeleteMaeum}
