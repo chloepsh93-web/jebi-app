@@ -15,15 +15,19 @@ const result = await build({
     import Home from './components/Home.jsx';
     import Onboarding from './components/Onboarding.jsx';
     import YeonDetail from './components/YeonDetail.jsx';
+    import AddMaeum from './components/AddMaeum.jsx';
+    export {qa} from '@/lib/store';
     export async function mount(name, props) {
       const container = document.createElement('div'); document.body.append(container);
       const root = createRoot(container);
-      const C = {Home,Onboarding,YeonDetail}[name];
+      const C = {Home,Onboarding,YeonDetail,AddMaeum}[name];
       await act(async()=>root.render(React.createElement(C, props)));
       return { container, click: async (element)=>act(async()=>element.click()),
         input: async (element,value)=>act(async()=>{
           Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set.call(element,value);
           element.dispatchEvent(new window.Event('input',{bubbles:true}));
+        }), select: async(element,value)=>act(async()=>{
+          element.value=value; element.dispatchEvent(new window.Event('change',{bubbles:true}));
         }), close: async()=>{await act(async()=>root.unmount());container.remove();} };
     }
   `, resolveDir: resolve('.'), loader: 'jsx' },
@@ -35,7 +39,7 @@ const result = await build({
     });
     b.onLoad({filter:/.*/,namespace:'mock'},args=>({contents: args.path.endsWith('metrics')
       ? 'export const logEvent=()=>{};'
-      : `export const store={getStatementMode:()=>"마음",setStatementMode:()=>{},setOnboarded:()=>{},upsertYeon:async()=>({id:"y1"}),addMaeum:async()=>{throw new Error("QA write failure")}};`,loader:'js'}));
+      : `export const qa={fail:true,writes:[]}; export const store={isAssetKindSupported:()=>true,getStatementMode:()=>"마음",setStatementMode:()=>{},setOnboarded:()=>{},upsertYeon:async()=>({id:"y1"}),addMaeum:async(value)=>{if(qa.fail)throw new Error("QA write failure");qa.writes.push(value);return {id:"m-new",...value}}};`,loader:'js'}));
   }}],
 });
 const file=join(folder,'fixture.mjs'); await writeFile(file,result.outputFiles[0].text);
@@ -50,7 +54,7 @@ test.after(() => {
   global.MessageChannel = nativeMessageChannel;
 });
 setup();
-const {mount}=await import(pathToFileURL(file));
+const {mount,qa}=await import(pathToFileURL(file));
 test.after(()=>rm(folder,{recursive:true,force:true}));
 function setup(){
  const dom=new JSDOM('<body></body>',{url:'https://example.test'});
@@ -103,4 +107,58 @@ test('onboarding has three slides and a failed real save remains at confirmation
  assert.ok(app.container.querySelector('.parsed'));
  assert.equal(app.container.querySelector('.plant-house'),null);
  await app.close();
+});
+
+
+test('schedule purpose clears hidden transfer fields; transfer requires evidence and preserves zero', async(t)=>{
+ setup();qa.fail=false;qa.writes=[];t.after(()=>{qa.fail=true});
+ localStorage.setItem('jebi:asset-kind','goods');
+ const app=await mount('AddMaeum',{yeons:people,maeums:[],presetYeonId:'y1',onSaved:()=>{},onClose:()=>{}});
+ t.after(()=>app.close());
+ await app.click(byText(app.container,'문자 없이 직접 입력'));
+ assert.equal(app.container.querySelector('[aria-label="금액"]'),null);
+ await app.select(app.container.querySelector('[aria-label="경조사 종류"]'),'결혼');
+ await app.click(byText(app.container,'일정 저장하기'));
+ assert.equal(qa.writes.length,1);assert.equal(qa.writes[0].amount,null);assert.equal(qa.writes[0].assetKind,null);
+ await app.close();
+ localStorage.removeItem('jebi:asset-kind');
+ const money=await mount('AddMaeum',{yeons:people,maeums:[],presetYeonId:'y1',onSaved:()=>{},onClose:()=>{}});
+ t.after(()=>money.close());
+ await money.click(buttons(money.container).find(b=>b.textContent.includes('돈·선물 기록하기')));
+ await money.click(byText(money.container,'문자 없이 직접 입력'));
+ await money.select(money.container.querySelector('[aria-label="경조사 종류"]'),'결혼');
+ await money.click(byText(money.container,'주고받은 마음 저장'));
+ assert.match(money.container.querySelector('[role="alert"]').textContent,/금액 또는/);assert.equal(qa.writes.length,1);
+ await money.input(money.container.querySelector('[aria-label="금액"]'),'0');
+ await money.click(byText(money.container,'주고받은 마음 저장'));
+ assert.equal(qa.writes.length,2);assert.equal(qa.writes[1].amount,0);
+});
+
+test('record save failure preserves the input and exposes an inline error',async(t)=>{
+ setup();qa.fail=true;
+ const app=await mount('AddMaeum',{yeons:people,maeums:[],presetYeonId:'y1',onSaved:()=>assert.fail('failed write must not finish'),onClose:()=>{}});
+ t.after(()=>app.close());
+ await app.click(byText(app.container,'문자 없이 직접 입력'));
+ await app.select(app.container.querySelector('[aria-label="경조사 종류"]'),' 부고'.trim());
+ await app.click(byText(app.container,'일정 저장하기'));
+ assert.match(app.container.querySelector('[role="alert"]').textContent,/저장하지 못했어요/);
+ assert.equal(app.container.querySelector('[aria-label="인연 이름"]').value,'김도현');
+});
+
+
+test('bereavement onboarding uses quiet completion and does not promise full gourds',async(t)=>{
+ setup();qa.fail=false;qa.writes=[];t.after(()=>{qa.fail=true});
+ const app=await mount('Onboarding',{onDone:()=>{}});t.after(()=>app.close());
+ await app.click(byText(app.container,'건너뛰기'));
+ await app.click(buttons(app.container).find(b=>b.textContent.includes('직접')));
+ await app.input(app.container.querySelector('input'),'김도현');
+ await app.click(byText(app.container,'부고'));
+ await app.click(byText(app.container,'이 마음 기억하기'));
+ await app.click(buttons(app.container).find(b=>b.textContent.includes('심') && !b.textContent.includes('다시')));
+ assert.match(app.container.textContent,/조용히 소식을 기록했어요/);
+ assert.equal(app.container.querySelector('.sprout-grow'),null);
+ await app.click(byText(app.container,'다음'));
+ assert.ok(!app.container.textContent.includes('이렇게 가득 차요'));
+ assert.equal(app.container.querySelector('img').alt,'마음을 기억하는 우리 집');
+ assert.equal(qa.writes[0].amount,null);
 });

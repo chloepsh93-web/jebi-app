@@ -383,18 +383,16 @@ export default function Onboarding({ onDone, inviteRef }) {
       {stage === "plant" && (
         <div className="ob-card">
           <img
-            className="ob-hero sprout-grow"
-            src={A.sprout_closeup}
-            alt="첫 새싹"
+            className={`ob-hero${form.event === "부고" ? "" : " sprout-grow"}`}
+            src={form.event === "부고" ? A.jebi_perched : A.sprout_closeup}
+            alt={form.event === "부고" ? "조용히 곁에 있는 제비" : "첫 새싹"}
             style={{ opacity: planted ? 1 : 0, transform: planted ? "none" : "scale(0.96)" }}
           />
           <h2
             className="serif ob-head"
             style={{ opacity: planted ? 1 : 0, transition: "opacity 1s .3s" }}
           >
-            첫 마음이
-            <br />
-            지붕에 심어졌어요
+            {isSample ? "기록 흐름을 체험했어요" : form.event === "부고" ? "조용히 소식을 기록했어요" : "소식을 기억했어요"}
           </h2>
           <p className="ob-sub" style={{ opacity: planted ? 1 : 0, transition: "opacity 1s .5s" }}>
             {isSample ? (
@@ -405,9 +403,9 @@ export default function Onboarding({ onDone, inviteRef }) {
               </>
             ) : (
               <>
-                당신의 집이 시작됐어요.
+                홈에서 일정을 다시 확인할 수 있어요.
                 <br />
-                박이 열리면 제비가 새 박씨를 물어와요
+                {form.event === "부고" ? "필요한 순간에 조용히 마음을 챙겨요." : "기억한 소식이 다음 인사로 이어져요."}
               </>
             )}
           </p>
@@ -421,16 +419,12 @@ export default function Onboarding({ onDone, inviteRef }) {
 
       {stage === "goal" && (
         <div className="ob-card fade-in">
-          <img className="ob-hero" src={A.house_gourds} alt="가득 찬 우리 집" />
+          <img className="ob-hero" src={form.event === "부고" ? A.house_empty : A.house_gourds} alt={form.event === "부고" ? "마음을 기억하는 우리 집" : "가득 찬 우리 집"} />
           <h2 className="serif ob-head">
-            언젠가 당신의 집도
-            <br />
-            이렇게 가득 차요
+            {form.event === "부고" ? "소중한 인연을 기억하는 집" : "정을 건네며 인연을 이어가요"}
           </h2>
           <p className="ob-sub">
-            주고받은 마음이 쌓일수록
-            <br />
-            지붕은 박으로, 집은 온기로 가득해져요
+            {form.event === "부고" ? "곁에 있고 싶은 순간을 잊지 않도록 도와드릴게요." : "기록한 마음이 다음 소중한 순간을 챙기는 데 도움이 돼요."}
           </p>
           <p className="ob-badge">받은 마음도, 전할 마음도 놓치지 않게 — 제비</p>
           <Dots n={3} />
