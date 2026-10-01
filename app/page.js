@@ -5,6 +5,7 @@ import { isConfigured, supabase } from "@/lib/supabase";
 import { store } from "@/lib/store";
 import { logEvent } from "@/lib/metrics";
 import { computeAlerts } from "@/lib/alerts";
+import { formatShort } from "@/lib/format";
 import { availableSeeds, isTransferRecord } from "@/lib/model";
 import Onboarding from "@/components/Onboarding";
 import Home from "@/components/Home";
@@ -705,8 +706,12 @@ export default function Page() {
               const sname = seed ? yeons.find((y) => y.id === seed.yeonId)?.name : null;
               triggerDelight(sname ? `${sname}님의 박씨에서 새 박이 자라나고 있어요` : "박씨에서 새 박이 자라나고 있어요");
             } else {
-              // P1-6 기록 완료 delight — "마음이 박에 담겼어요"
-              triggerDelight("마음이 박에 담겼어요");
+              // P1 첫 경험: 저장 결과에 이름·행사·날짜 표시
+              const yname = yeons.find((y) => y.id === saved?.yeonId)?.name;
+              const when = saved?.eventDate && !String(saved.eventDate).startsWith("????")
+                ? formatShort(saved.eventDate) : null;
+              const detail = [yname ? `${yname}님` : null, saved?.eventType, when].filter(Boolean).join(" · ");
+              triggerDelight(detail ? `${detail} — 마음이 박에 담겼어요` : "마음이 박에 담겼어요");
             }
             await refresh();
           }}

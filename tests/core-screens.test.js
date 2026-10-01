@@ -192,3 +192,12 @@ test('shopping record starts as a sent transfer with the same occasion and no in
  assert.ok(app.container.textContent.includes('돈·선물'));
  assert.equal(app.container.querySelector('input[inputmode="numeric"]').value,'');
 });
+
+test('editing a transfer keeps unknown assetKind instead of inventing cash',async(t)=>{
+ setup(); let patch;
+ const gift={...upcoming,amount:50000,assetKind:null};
+ const app=await mount('MaeumSheet',{maeum:gift,yeonName:'김도현',onClose:()=>{},onSave:async(id,p)=>{patch=p;}});t.after(()=>app.close());
+ await app.click(byText(app.container,'수정 내용 저장'));
+ assert.ok(!('assetKind' in patch),'assetKind must not be invented on edit');
+ assert.equal(patch.amount,50000);
+});

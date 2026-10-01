@@ -37,7 +37,7 @@ export default function MaeumSheet({ maeum, yeonName, onClose, onSave, onDelete,
     setSaving(true);
     try {
       await onSave(maeum.id, {
-        ...(transfer && !maeum.assetKind ? { assetKind: "cash" } : {}),
+        // 미표기 assetKind는 추정하지 않는다 — 모호한 기존 행을 자동 변환하지 않음
         eventType: form.eventType,
         // J03 (QA05): 날짜 미정이면 null + unknown
         eventDate: form.dateUnknown ? null : (form.date || null),
