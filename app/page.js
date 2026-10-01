@@ -340,6 +340,8 @@ export default function Page() {
       stageSnapshot(snap); // 매직링크 클릭 시 리로드에 대비해 localStorage에도 보관
     } catch {
       mergeSnapRef.current = null;
+      showToast("기록을 확인하지 못했어요. 로그인 전에 다시 시도해주세요.");
+      return;
     }
     setGuardFlow("login");
   };
